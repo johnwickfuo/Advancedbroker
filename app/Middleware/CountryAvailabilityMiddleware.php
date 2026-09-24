@@ -12,8 +12,12 @@ final class CountryAvailabilityMiddleware {
         return $next($request);
     }
     private function sensitive(Request $r):bool{
-        if(preg_match('#^/companies/[^/]+/buy#',$r->path))return true;
-        if(str_starts_with($r->path,'/dashboard/deposit')||str_starts_with($r->path,'/dashboard/withdraw'))return true;
-        return $r->method!=='GET'&&str_starts_with($r->path,'/dashboard/investments/');
+        if($r->method==='GET'){
+            return $r->path==='/dashboard/deposit' || $r->path==='/dashboard/withdraw' || preg_match('#^/companies/[^/]+/buy$#',$r->path)===1;
+        }
+        if(str_starts_with($r->path,'/dashboard/deposit/')) return str_ends_with($r->path,'/cancel');
+        if(str_starts_with($r->path,'/dashboard/withdraw/')) return str_ends_with($r->path,'/cancel');
+        if(str_starts_with($r->path,'/dashboard/investments/')) return true;
+        return $r->path==='/dashboard/deposit' || $r->path==='/dashboard/withdraw' || preg_match('#^/companies/[^/]+/buy(?:/review|/confirm)?$#',$r->path)===1;
     }
 }
