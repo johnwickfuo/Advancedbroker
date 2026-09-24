@@ -1,0 +1,1 @@
+<section class="section"><div class="card"><p class="eyebrow">429</p><h1>Too many requests</h1><p><?= e($message ?? 'Please wait a moment and try again.') ?></p><a class="button button-small" href="<?= e(route('home')) ?>">Return home</a></div></section>

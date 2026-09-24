@@ -40,7 +40,7 @@ final class Application {
     public static function database(string $basePath): Database { return new Database(require $basePath.'/config/database.php'); }
     public static function handle(string $basePath): void {
         $router=self::boot($basePath); Session::start(config('app.session')); require $basePath.'/routes/web.php'; require $basePath.'/routes/admin.php'; require $basePath.'/routes/api.php';
-        try { $request=Request::capture(); $response=app(\App\Middleware\SecurityHeadersMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CountryResolutionMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CsrfMiddleware::class)->handle($request,fn($request)=>$router->dispatch($request)))); }
+        try { $request=Request::capture(); $response=app(\App\Middleware\SecurityHeadersMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CountryResolutionMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\RateLimitMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CsrfMiddleware::class)->handle($request,fn($request)=>$router->dispatch($request))))); }
         catch (HttpException $e) { $response=new Response(app('view')->render('errors.'.($e->status===419?'419':$e->status),['title'=>$e->status.' error','message'=>$e->getMessage()]),$e->status); }
         catch (\Throwable $e) { app('logger')->error('Unhandled exception',['type'=>$e::class,'message'=>$e->getMessage()]); $response=config('app.debug') ? new Response('<pre>'.e((string)$e).'</pre>',500) : new Response(app('view')->render('errors.500',['title'=>'Something went wrong']),500); }
         $response->send();
