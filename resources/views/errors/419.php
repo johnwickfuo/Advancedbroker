@@ -1,0 +1,1 @@
+<section class="error-page"><p class="eyebrow">419</p><h1>Form expired</h1><p><?= e($message ?? 'Please refresh the page and try again.') ?></p><a class="button" href="<?= e(route('home')) ?>">Go home</a></section>

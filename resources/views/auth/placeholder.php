@@ -1,0 +1,1 @@
+<section class="auth-card"><p class="eyebrow">Account access</p><h1><?= e($title) ?></h1><p>This secure authentication flow will be completed in Prompt 2.</p><a class="button" href="<?= e(route('home')) ?>">Return home</a></section>

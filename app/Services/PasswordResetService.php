@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+namespace App\Services;
+use App\Mail\MailService; use App\Repositories\UserRepository; use App\Support\Database;
+final class PasswordResetService {
+    public function __construct(private ?Database $db,private UserRepository $users,private MailService $mail,private SecurityEventService $events) {}
+    public function request(string $email): void { $user=$this->users->byEmail($email); if(!$user||!$this->db)return; $this->db->execute('UPDATE password_reset_tokens SET used_at=NOW() WHERE user_id=? AND used_at IS NULL',[$user['id']]); $token=TokenService::raw(); $this->db->execute('INSERT INTO password_reset_tokens (user_id,token_hash,expires_at,created_at) VALUES (?,?,DATE_ADD(NOW(),INTERVAL 60 MINUTE),NOW())',[$user['id'],TokenService::hash($token)]); $url=url('/reset-password?token='.rawurlencode($token)); $this->mail->send($user['email'],'Reset your password','action-link',['greeting'=>$user['first_name'],'message'=>'Use this secure link to choose a new password. It expires in one hour.','url'=>$url,'action'=>'Reset password']); $this->events->record((int)$user['id'],'password_reset_requested'); }
+    public function consume(string $token,string $password): ?int { if(!$this->db)return null; $row=$this->db->one('SELECT * FROM password_reset_tokens WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW() LIMIT 1',[TokenService::hash($token)]); if(!$row)return null; return $this->db->transaction(function()use($row,$password){$this->db->execute('UPDATE password_reset_tokens SET used_at=NOW() WHERE id=? AND used_at IS NULL',[$row['id']]); $this->users->update((int)$row['user_id'],['password_hash'=>\App\Security\PasswordHasher::hash($password)]); $this->db->execute('UPDATE remember_tokens SET revoked_at=NOW() WHERE user_id=? AND revoked_at IS NULL',[$row['user_id']]); $this->events->record((int)$row['user_id'],'password_reset_completed'); return (int)$row['user_id'];}); }
+}

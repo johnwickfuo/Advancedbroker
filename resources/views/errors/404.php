@@ -1,0 +1,1 @@
+<section class="error-page"><p class="eyebrow">404</p><h1>Page not found</h1><p><?= e($message ?? 'The page you requested does not exist.') ?></p><a class="button" href="<?= e(route('home')) ?>">Go home</a></section>

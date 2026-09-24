@@ -1,0 +1,1 @@
+<section class="error-page"><p class="eyebrow">403</p><h1>Access denied</h1><p><?= e($message ?? 'You do not have permission to access this page.') ?></p><a class="button" href="<?= e(route('home')) ?>">Go home</a></section>

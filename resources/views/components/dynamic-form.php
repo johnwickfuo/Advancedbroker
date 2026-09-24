@@ -1,0 +1,9 @@
+<?php foreach($fields as $field): $key=(string)$field['field_key']; $type=(string)$field['field_type']; if(in_array($type,['INSTRUCTION','COPYABLE_VALUE'],true)): ?>
+<section class="field-instruction"><strong><?= e($field['label']) ?></strong><p><?= e($field['help_text'] ?: $field['default_value']) ?></p><?php if($type==='COPYABLE_VALUE'): ?><button type="button" class="button button-secondary" data-copy-value="<?= e($field['default_value']) ?>">Copy value</button><?php endif; ?></section>
+<?php elseif($type!=='HIDDEN'): ?><label class="field"><span><?= e($field['label']) ?><?= $field['is_required']?' *':'' ?></span>
+<?php if(in_array($type,['SELECT','RADIO','MULTI_SELECT'],true)): ?><select name="<?= e($key) ?><?= $type==='MULTI_SELECT'?'[]':'' ?>"<?= $type==='MULTI_SELECT'?' multiple':'' ?><?= $field['is_required']?' required':'' ?>><?php foreach($field['options'] as $option): ?><option value="<?= e($option['option_value']) ?>"><?= e($option['option_label']) ?></option><?php endforeach; ?></select>
+<?php elseif($type==='TEXTAREA'): ?><textarea name="<?= e($key) ?>" placeholder="<?= e($field['placeholder']) ?>"<?= $field['is_required']?' required':'' ?>></textarea>
+<?php elseif($type==='FILE'): ?><input type="file" name="<?= e($key) ?>"<?= $field['accepted_mimes']?' accept="'.e(implode(',',$field['accepted_mimes'])).'"':'' ?><?= $field['is_required']?' required':'' ?>>
+<?php elseif($type==='CHECKBOX'): ?><input type="checkbox" name="<?= e($key) ?>" value="1"<?= $field['is_required']?' required':'' ?>>
+<?php else: ?><input type="<?= e(match($type){'NUMBER'=>'number','EMAIL'=>'email','PHONE'=>'tel','DATE'=>'date',default=>'text'}) ?>" name="<?= e($key) ?>" placeholder="<?= e($field['placeholder']) ?>"<?= $field['is_required']?' required':'' ?>><?php endif; ?>
+<?php if($field['help_text']): ?><small><?= e($field['help_text']) ?></small><?php endif; ?></label><?php endif; endforeach; ?>

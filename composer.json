@@ -1,0 +1,9 @@
+{
+  "name": "upgradedbroker/investment-platform",
+  "description": "Multi-country investment platform foundation built with plain PHP.",
+  "type": "project",
+  "license": "proprietary",
+  "require": {"php": "^8.2"},
+  "autoload": {"psr-4": {"App\\": "app/", "Database\\Seeds\\": "database/seeds/"}},
+  "config": {"sort-packages": true, "optimize-autoloader": true}
+}

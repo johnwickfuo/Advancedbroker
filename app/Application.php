@@ -1,0 +1,48 @@
+<?php
+declare(strict_types=1);
+namespace App;
+use App\Exceptions\HttpException;
+use App\Repositories\{ArrayCountryRepository,DatabaseCountryRepository,CompanyRepository};
+use App\Security\{Crypto,Csrf,Session};
+use App\Repositories\UserRepository;
+use App\Services\{AccountAccessService,AuditLogService,AuthService,BrandingService,CompanyService,ContactService,ContentService,CountryAccessService,CountryAdminService,CountryResolver,CountryService,DepositService,DynamicFormService,EmailVerificationService,FaqService,GeoLocationService,InvestmentService,KycService,LanguageService,LegalService,LicenseService,NotificationService,OfferingCalculator,OfferingValidator,PasswordResetService,QrCodeService,SecurityEventService,SessionService,SettingsService,ThemeService,Translator,TwoFactorService,UploadService,UserPreferenceService,WalletService,WithdrawalService};
+use App\Mail\MailService;
+use App\Support\{Cache,Container,Database,Env,Logger,Request,Response,Router,View};
+
+final class Application {
+    public static function boot(string $basePath): Router {
+        Env::load($basePath . '/.env');
+        $config = ['app'=>require $basePath.'/config/app.php','database'=>require $basePath.'/config/database.php','mail'=>require $basePath.'/config/mail.php','security'=>require $basePath.'/config/security.php','geoip'=>require $basePath.'/config/geoip.php','localization'=>require $basePath.'/config/localization.php'];
+        date_default_timezone_set($config['app']['timezone']);
+        $container = Container::instance();
+        $container->set('config',$config); $container->set('logger',new Logger($basePath.'/storage/logs')); $container->set('cache',new Cache($basePath.'/storage/cache')); $container->set('csrf',new Csrf()); $container->set('view',new View($basePath.'/resources/views')); $container->set('upload',new UploadService($basePath.'/storage/uploads/public',$basePath.'/storage/private',$config['app']['uploads']['max_bytes']));
+        $database = null;
+        try { $database = self::database($basePath); $repository = new DatabaseCountryRepository($database); }
+        catch (\Throwable $e) { $container->get('logger')->error('Country repository database unavailable; serving Global fallback.', ['message'=>$e->getMessage()]); $repository = new ArrayCountryRepository([['id'=>0,'code'=>null,'slug'=>'global','name'=>'Global','local_name'=>'Global','currency_code'=>'USD','currency_symbol'=>'$','currency_symbol_position'=>'before','locale'=>'en','timezone'=>'UTC','is_global'=>1,'is_active'=>1,'is_enabled'=>1,'theme'=>[],'visual_assets'=>[]]]); }
+        $container->set('database',$database);
+        $countries = new CountryService($repository,$container->get('cache'));
+        $container->set('countries',$countries); $container->set('geo',new GeoLocationService($config['geoip'])); $container->set('country_resolver',new CountryResolver($countries,$container->get('geo'),(bool)$config['app']['debug'])); $container->set('languages',new LanguageService($countries)); $container->set('translator',new Translator($basePath.'/resources/lang',$config['localization']['available_languages'])); $container->set('theme',new ThemeService()); $container->set('country_access',new CountryAccessService()); $container->set('user_preferences',new UserPreferenceService($database));
+        $container->set('users',new UserRepository($database)); $container->set('settings',new SettingsService($database,$container->get('cache'))); $container->set('notifications',new NotificationService($database)); $container->set('audit',new AuditLogService($database)); $container->set('security_events',new SecurityEventService($database,$container->get('logger'))); $container->set('account_access',new AccountAccessService()); $container->set('mail',new MailService($config['mail'],$container->get('logger'),$basePath.'/resources/views')); $container->set('branding',new BrandingService($database));$container->set('content',new ContentService($database));$container->set('legal',new LegalService($database));$container->set('licenses',new LicenseService($database));$container->set('faqs',new FaqService($database));$container->set('contacts',new ContactService($database));$container->set('country_admin',new CountryAdminService($database));$container->set('companies',new CompanyService(new CompanyRepository($database),$container->get('cache')));$container->set('offering_calculator',new OfferingCalculator());$container->set('offering_validator',new OfferingValidator());$container->set('forms',new DynamicFormService($database));$container->set('wallets',new WalletService($database));$container->set('deposits',new DepositService($database,$container->get('wallets'),$container->get('forms'),$container->get('notifications')));$container->set('investments',new InvestmentService($database,$container->get('wallets'),$container->get('offering_calculator'),$container->get('licenses'),$container->get('notifications')));$container->set('kyc',new KycService($database,$container->get('forms'),$container->get('notifications')));$container->set('withdrawals',new WithdrawalService($database,$container->get('wallets'),$container->get('kyc'),$container->get('forms'),$container->get('notifications')));
+        $key=$config['app']['key'];
+        if ($key === '') {
+            if ($config['app']['env'] === 'production') {
+                throw new \RuntimeException('APP_KEY must be configured before production startup.');
+            }
+            $key = base64_encode(random_bytes(32));
+            $container->get('logger')->error('APP_KEY is not configured; a temporary development key was generated.');
+        }
+        $container->set('qr',new QrCodeService()); $container->set('two_factor',new TwoFactorService($database,$container->get('users'),new Crypto($key),$container->get('security_events'))); $container->set('sessions',new SessionService($database,$container->get('users'),$container->get('security_events'))); $container->set('auth',new AuthService($container->get('users'),$container->get('sessions'),$container->get('security_events'),$container->get('notifications'))); $container->set('password_resets',new PasswordResetService($database,$container->get('users'),$container->get('mail'),$container->get('security_events'))); $container->set('email_verification',new EmailVerificationService($database,$container->get('users'),$container->get('mail'),$container->get('security_events')));
+        $router = new Router(); $container->set('router',$router);
+        foreach ([\App\Middleware\CsrfMiddleware::class,\App\Middleware\AuthMiddleware::class,\App\Middleware\GuestMiddleware::class,\App\Middleware\AdminMiddleware::class,\App\Middleware\SecurityHeadersMiddleware::class,\App\Middleware\RateLimitMiddleware::class,\App\Middleware\CountryResolutionMiddleware::class,\App\Middleware\SuspendedAccountMiddleware::class,\App\Middleware\CountryAvailabilityMiddleware::class,\App\Middleware\VerifiedEmailMiddleware::class,\App\Middleware\RequireCountryAccessMiddleware::class] as $id) $container->set($id,new $id());
+        foreach ([\App\Controllers\HomeController::class,\App\Controllers\CompanyController::class,\App\Controllers\LanguageController::class,\App\Controllers\AuthController::class,\App\Controllers\PasswordController::class,\App\Controllers\TwoFactorController::class,\App\Controllers\DashboardController::class,\App\Controllers\ProfileController::class,\App\Controllers\SecurityController::class,\App\Controllers\FinancialController::class,\App\Controllers\InvestmentController::class,\App\Controllers\KycController::class,\App\Controllers\WithdrawalController::class,\App\Controllers\NotificationController::class,\App\Controllers\AdminFinanceController::class,\App\Controllers\AdminInvestmentController::class,\App\Controllers\AdminKycController::class,\App\Controllers\AdminWithdrawalController::class,\App\Controllers\AdminMethodController::class,\App\Controllers\AdminOverviewController::class,\App\Controllers\AdminPreviewController::class,\App\Controllers\AdminUserController::class,\App\Controllers\AdminSettingsController::class,\App\Controllers\AdminCountryController::class,\App\Controllers\AdminCompanyController::class,\App\Controllers\AdminContentController::class,\App\Controllers\PublicContentController::class,\App\Controllers\MediaController::class] as $id) $container->set($id,new $id());
+        return $router;
+    }
+    public static function database(string $basePath): Database { return new Database(require $basePath.'/config/database.php'); }
+    public static function handle(string $basePath): void {
+        $router=self::boot($basePath); Session::start(config('app.session')); require $basePath.'/routes/web.php'; require $basePath.'/routes/admin.php'; require $basePath.'/routes/api.php';
+        try { $request=Request::capture(); $response=app(\App\Middleware\SecurityHeadersMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CountryResolutionMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CsrfMiddleware::class)->handle($request,fn($request)=>$router->dispatch($request)))); }
+        catch (HttpException $e) { $response=new Response(app('view')->render('errors.'.($e->status===419?'419':$e->status),['title'=>$e->status.' error','message'=>$e->getMessage()]),$e->status); }
+        catch (\Throwable $e) { app('logger')->error('Unhandled exception',['type'=>$e::class,'message'=>$e->getMessage()]); $response=config('app.debug') ? new Response('<pre>'.e((string)$e).'</pre>',500) : new Response(app('view')->render('errors.500',['title'=>'Something went wrong']),500); }
+        $response->send();
+    }
+}

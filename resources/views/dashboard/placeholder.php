@@ -1,0 +1,1 @@
+<p class="eyebrow">Account area</p><h1><?= e($title) ?></h1><div class="empty-state"><h2>This section is being prepared.</h2><p>There is no sample financial activity here. Your real account data will appear when the next financial-platform modules are enabled.</p></div>

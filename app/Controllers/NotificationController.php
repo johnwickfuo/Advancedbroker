@@ -1,0 +1,3 @@
+<?php
+declare(strict_types=1);namespace App\Controllers;use App\Support\{Request,Response};
+final class NotificationController extends Controller {public function index(Request $r):Response{$id=(int)$_SESSION['user_id'];return $this->view('notifications.index',['title'=>'Notifications','notifications'=>app('notifications')->all($id)],'layouts.dashboard');}public function read(Request $r):Response{app('notifications')->markRead((int)$_SESSION['user_id'],(int)$r->route('notification'));return $this->redirect('dashboard.notifications');}public function readAll(Request $r):Response{app('notifications')->markAllRead((int)$_SESSION['user_id']);$this->flash('success','All notifications marked read.');return $this->redirect('dashboard.notifications');}}

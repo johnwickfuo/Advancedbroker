@@ -1,0 +1,2 @@
+<?php
+return ['navigation'=>['markets'=>'Märkte','how_it_works'=>'So funktioniert es','sign_in'=>'Anmelden','get_started'=>'Starten'],'home'=>['hero_headline'=>'Mit Klarheit investieren.','hero_subheading'=>'Eine sichere Anlageerfahrung für Ihren Markt.'],'language'=>['label'=>'Sprache','updated'=>'Sprache aktualisiert.','unsupported'=>'Diese Sprache ist für dieses Länderpaket nicht verfügbar.']];
