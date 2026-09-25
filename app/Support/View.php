@@ -7,7 +7,7 @@ final class View {
         $content = $this->file($view, $data);
         $html = $this->file($layout, array_merge($data, ['content' => $content]));
 
-        if (in_array($layout, ['layouts.public','layouts.auth'], true)) {
+        if (in_array($layout, ['layouts.public','layouts.auth','layouts.dashboard'], true)) {
             try {
                 $context = country();
                 if ($context->languageCode !== 'en') {
