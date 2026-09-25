@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-use App\Controllers\{AiTradingController,AuthController,CompanyController,DashboardController,FinancialController,HomeController,InvestmentController,KycController,MediaController,NotificationController,PasswordController,ProfileController,PublicContentController,SecurityController,TwoFactorController,WithdrawalController}; use App\Middleware\{AuthMiddleware,CountryAvailabilityMiddleware,GuestMiddleware,SuspendedAccountMiddleware,VerifiedEmailMiddleware}; use App\Support\{Request,Router};
+use App\Controllers\{AiTradingController,AuthController,CompanyController,DashboardController,FinancialController,HomeController,InvestmentController,KycController,MediaController,NotificationController,PasswordController,ProfileController,PublicContentController,SecurityController,TwoFactorController,WithdrawalController}; use App\Middleware\{AuthMiddleware,CountryAvailabilityMiddleware,GuestMiddleware,SuspendedAccountMiddleware,UserMiddleware,VerifiedEmailMiddleware}; use App\Support\{Request,Router};
 /** @var Router $router */
 $router->get('/', [HomeController::class, 'index'], 'home');
 $router->post('/language', [\App\Controllers\LanguageController::class, 'update'], 'language.update');
@@ -21,8 +21,9 @@ $router->group(['middleware'=>[GuestMiddleware::class]],function(Router $router)
 $router->get('/verify-email',[AuthController::class,'verify'],'verify-email');$router->post('/verify-email',[AuthController::class,'confirmVerification'],'verify-email.confirm');
 $router->group(['middleware'=>[AuthMiddleware::class,VerifiedEmailMiddleware::class,SuspendedAccountMiddleware::class,CountryAvailabilityMiddleware::class]],function(Router $router):void{
     $router->post('/logout',[AuthController::class,'logout'],'logout');
-    $router->post('/ai-trading/{category}/buy',[AiTradingController::class,'buy'],'ai-trading.buy');
-    $router->group(['prefix'=>'/dashboard','as'=>'dashboard.'],function(Router $router):void{
+    $router->group(['middleware'=>[UserMiddleware::class]],function(Router $router):void{
+        $router->post('/ai-trading/{category}/buy',[AiTradingController::class,'buy'],'ai-trading.buy');
+        $router->group(['prefix'=>'/dashboard','as'=>'dashboard.'],function(Router $router):void{
         $router->get('/',[DashboardController::class,'index'],'index');
         $router->get('/ai-trading',[AiTradingController::class,'dashboard'],'ai-trading');$router->get('/ai-trading/{purchase}',[AiTradingController::class,'show'],'ai-trading.show');$router->post('/ai-trading/{purchase}/activate',[AiTradingController::class,'activate'],'ai-trading.activate');
         $router->get('/profile',[ProfileController::class,'edit'],'profile');$router->post('/profile',[ProfileController::class,'update'],'profile.update');
@@ -35,8 +36,9 @@ $router->group(['middleware'=>[AuthMiddleware::class,VerifiedEmailMiddleware::cl
         $router->get('/kyc',[KycController::class,'index'],'kyc');$router->post('/kyc',[KycController::class,'save'],'kyc.save');$router->get('/kyc/documents/{document}',[KycController::class,'document'],'kyc.document');
         $router->get('/withdraw',[WithdrawalController::class,'index'],'withdraw');$router->post('/withdraw',[WithdrawalController::class,'submit'],'withdraw.submit');$router->get('/withdrawals',[WithdrawalController::class,'history'],'withdrawals');$router->get('/withdraw/{withdrawal}',[WithdrawalController::class,'detail'],'withdraw.detail');$router->post('/withdraw/{withdrawal}/cancel',[WithdrawalController::class,'cancel'],'withdraw.cancel');
         $router->get('/notifications',[NotificationController::class,'index'],'notifications');$router->post('/notifications/{notification}/read',[NotificationController::class,'read'],'notifications.read');$router->post('/notifications/read-all',[NotificationController::class,'readAll'],'notifications.read-all');
+        });
     });
 });
-$router->group(['middleware'=>[AuthMiddleware::class,VerifiedEmailMiddleware::class,SuspendedAccountMiddleware::class,CountryAvailabilityMiddleware::class]],function(Router $router):void{
+$router->group(['middleware'=>[AuthMiddleware::class,VerifiedEmailMiddleware::class,SuspendedAccountMiddleware::class,CountryAvailabilityMiddleware::class,UserMiddleware::class]],function(Router $router):void{
     $router->get('/companies/{company}/buy',[InvestmentController::class,'buy'],'companies.buy');$router->post('/companies/{company}/buy/review',[InvestmentController::class,'review'],'companies.buy.review');$router->post('/companies/{company}/buy/confirm',[InvestmentController::class,'confirm'],'companies.buy.confirm');
 });
