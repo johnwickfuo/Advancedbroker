@@ -58,11 +58,16 @@ final class CompanySeeder
             }
 
             $ids[] = $id;
-            $hasSource = (int)$db->scalar(
-                'SELECT COUNT(*) FROM company_sources WHERE company_id=? AND source_url=?',
-                [$id,$company['ir']]
+            $officialSourceCount = (int)$db->scalar(
+                'SELECT COUNT(*) FROM company_sources WHERE company_id=? AND source_type="OFFICIAL_COMPANY"',
+                [$id]
             );
-            if ($hasSource === 0) {
+            if ($officialSourceCount > 0) {
+                $db->execute(
+                    'UPDATE company_sources SET title=?,source_url=?,publisher=?,verified_at=CURDATE() WHERE company_id=? AND source_type="OFFICIAL_COMPANY"',
+                    [$company['name'].' investor information',$company['ir'],$company['name'],$id]
+                );
+            } else {
                 $db->execute(
                     'INSERT INTO company_sources(company_id,source_type,title,source_url,publisher,verified_at) VALUES (?,"OFFICIAL_COMPANY",?,?,?,CURDATE())',
                     [$id,$company['name'].' investor information',$company['ir'],$company['name']]
