@@ -25,7 +25,7 @@
     <label style="grid-column:1/-1">User instructions<textarea name="instructions" rows="5"><?= e($method['instructions']??'') ?></textarea></label>
 
     <?php if($kind==='deposit'): ?>
-    <div data-method-section="BANK"<?= ($method['method_type']??'CUSTOM')==='BANK'?'':' hidden' ?> style="grid-column:1/-1">
+    <div data-method-section="BANK" class="form-grid"<?= ($method['method_type']??'CUSTOM')==='BANK'?'':' hidden' ?> style="grid-column:1/-1">
     <div><p class="section-label">International bank details</p><p class="muted">These details are shown to users exactly as the destination for their transfer.</p></div>
     <label>Beneficiary name<input name="beneficiary_name" value="<?= e($details['beneficiary_name']??'') ?>"></label>
     <label>Bank name<input name="bank_name" value="<?= e($details['bank_name']??'') ?>"></label>
@@ -36,7 +36,7 @@
     <label style="grid-column:1/-1">Beneficiary address <span class="muted">(optional)</span><input name="beneficiary_address" value="<?= e($details['beneficiary_address']??'') ?>"></label>
     </div>
 
-    <div data-method-section="CRYPTO"<?= ($method['method_type']??'CUSTOM')==='CRYPTO'?'':' hidden' ?> style="grid-column:1/-1">
+    <div data-method-section="CRYPTO" class="form-grid"<?= ($method['method_type']??'CUSTOM')==='CRYPTO'?'':' hidden' ?> style="grid-column:1/-1">
     <div><p class="section-label">Crypto destination</p><p class="muted">Save the wallet address and ApexTrades automatically generates its QR code.</p></div>
     <label>Asset<input name="asset" value="<?= e($details['asset']??'') ?>" placeholder="BTC or USDT"></label>
     <label>Network<input name="network" value="<?= e($details['network']??'') ?>" placeholder="Bitcoin Mainnet, TRC20, ERC20..."></label>
