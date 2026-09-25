@@ -25,6 +25,7 @@ window.smartsupp||(function(d) {
   <header class="workspace-topbar">
     <button class="icon-button" data-menu aria-label="Open navigation">☰</button>
     <div class="workspace-search"><a href="<?= e(route('companies.index')) ?>">Search investments</a></div>
+    <?php require __DIR__.'/../partials/gtranslate.php'; ?>
     <div class="header-account"><span><?= e($currentUser['first_name']??'Account') ?></span><a class="avatar" href="<?= e(route('dashboard.profile')) ?>"><?= e(strtoupper(substr((string)($currentUser['first_name']??'A'),0,1))) ?></a></div>
   </header>
   <?php require __DIR__.'/../partials/popups.php'; ?>
