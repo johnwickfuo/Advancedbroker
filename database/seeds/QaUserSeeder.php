@@ -30,7 +30,7 @@ final class QaUserSeeder
 
         if (!$user) {
             $db->execute(
-                'INSERT INTO users(uuid,username,first_name,last_name,email,password_hash,country_id,assigned_country_id,country_assignment_source,original_country_id,preferred_language_id,detected_country_code,account_status,role,email_verified_at,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'active','user',NOW(),NOW(),'qa-seed',NOW(),'qa-seed',NOW(),NOW())',
+                "INSERT INTO users(uuid,username,first_name,last_name,email,password_hash,country_id,assigned_country_id,country_assignment_source,original_country_id,preferred_language_id,detected_country_code,account_status,role,email_verified_at,terms_accepted_at,terms_version,privacy_accepted_at,privacy_version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'active','user',NOW(),NOW(),'qa-seed',NOW(),'qa-seed',NOW(),NOW())",
                 [
                     $this->uuid(),$username,'User','User',$email,PasswordHasher::hash($password),
                     $global['id'],null,'QA_SEED',$global['id'],$languageId,null
