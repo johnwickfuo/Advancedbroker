@@ -90,7 +90,7 @@ final class OfflinePageTranslationService
 
     private function enabled(): bool { return (bool)($this->config['enabled']??true); }
     private function targetCode(string $language): string {
-        return match(strtolower($language)){'fil'=>'tl','zh'=>'zh','no'=>'nb',default=>strtolower($language)};
+        return match(strtolower($language)){'fil'=>'tl','zh'=>'zt','no'=>'nb','pt'=>'pb',default=>strtolower($language)};
     }
     private function cacheKey(string $target,string $text): string { return 'offline-translate:'.$target.':'.hash('sha256',$text); }
 

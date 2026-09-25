@@ -2,7 +2,7 @@
 import sys
 import argostranslate.package
 
-targets=["de","fr","it","es","nl","sv","nb","da","ja","ko","zh","hi","ar","pl","tl","pt"]
+targets=["de","fr","it","es","nl","sv","nb","da","ja","ko","zt","hi","ar","pl","tl","pb"]
 argostranslate.package.update_package_index()
 packages=argostranslate.package.get_available_packages()
 installed=[]
