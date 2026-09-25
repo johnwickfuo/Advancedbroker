@@ -12,6 +12,7 @@ $gtCountryId=$gtContext->id();
 (function(){
   var target=<?= json_encode($gtTarget,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) ?>;
   var countryId=<?= json_encode((string)$gtCountryId) ?>;
+  var desired="/en/"+target;
 
   function getCookie(name){
     var prefix=name+"=";
@@ -19,8 +20,8 @@ $gtCountryId=$gtContext->id();
     for(var i=0;i<parts.length;i++){
       var part=parts[i].trim();
       if(part.indexOf(prefix)===0){
-        try{return decodeURIComponent(part.substring(prefix.length));}
-        catch(e){return part.substring(prefix.length);}
+        var value=part.substring(prefix.length);
+        try{return decodeURIComponent(value);}catch(e){return value;}
       }
     }
     return "";
@@ -28,27 +29,42 @@ $gtCountryId=$gtContext->id();
 
   function setTranslateCookie(language){
     var value="/en/"+language;
-    document.cookie="googtrans="+encodeURIComponent(value)+"; path=/; SameSite=Lax";
+    /* GTranslate expects the raw /source/target cookie value. */
+    document.cookie="googtrans="+value+"; path=/; SameSite=Lax";
+  }
+
+  function fireHtmlEvent(element,eventName){
+    try{
+      var event=document.createEvent("HTMLEvents");
+      event.initEvent(eventName,true,true);
+      element.dispatchEvent(event);
+    }catch(e){}
+  }
+
+  function activateHiddenTranslator(){
+    var combo=document.querySelector("select.goog-te-combo");
+    if(!combo)return false;
+
+    if(combo.value!==target)combo.value=target;
+    fireHtmlEvent(combo,"change");
+    fireHtmlEvent(combo,"change");
+    return true;
   }
 
   var previousCountry=null;
   try{previousCountry=localStorage.getItem("apex_gtranslate_country");}catch(e){}
 
-  var currentTranslation=getCookie("googtrans");
-  var currentLanguage=currentTranslation ? currentTranslation.split("/").pop() : "";
+  var current=getCookie("googtrans");
+  var shouldAutoApply=previousCountry!==countryId || current!==desired;
 
-  /*
-   * Country Pack changes should reset GTranslate to that market's default
-   * language. Inside the same Country Pack, a visitor's manual language
-   * selection is preserved.
-   *
-   * Also recover browsers affected by the previous implementation where the
-   * dropdown changed visually but no googtrans cookie was actually created.
-   */
-  if(previousCountry!==countryId || !currentLanguage){
+  if(shouldAutoApply){
     setTranslateCookie(target);
     try{localStorage.setItem("apex_gtranslate_country",countryId);}catch(e){}
   }
+
+  window.apexGTranslateAutoApply=shouldAutoApply;
+  window.apexGTranslateTarget=target;
+  window.apexActivateGTranslate=activateHiddenTranslator;
 })();
 
 window.gtranslateSettings={
@@ -58,3 +74,38 @@ window.gtranslateSettings={
 };
 </script>
 <script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" defer></script>
+<script>
+(function(){
+  if(!window.apexGTranslateAutoApply)return;
+
+  var attempts=0;
+  function apply(){
+    attempts++;
+
+    if(typeof window.apexActivateGTranslate==="function" && window.apexActivateGTranslate()){
+      return;
+    }
+
+    /*
+     * The current dropdown widget lazy-loads its translation library after
+     * interaction. Nudge the visible selector so that library is initialised,
+     * then retry the hidden translator selector.
+     */
+    var visible=document.querySelector(".gtranslate_wrapper select");
+    if(visible){
+      try{
+        visible.dispatchEvent(new MouseEvent("mouseover",{bubbles:true}));
+        visible.dispatchEvent(new Event("focus",{bubbles:true}));
+      }catch(e){}
+    }
+
+    if(attempts<60)setTimeout(apply,200);
+  }
+
+  if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",function(){setTimeout(apply,100);},{once:true});
+  }else{
+    setTimeout(apply,100);
+  }
+})();
+</script>
