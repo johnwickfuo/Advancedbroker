@@ -29,18 +29,19 @@ Run migrations in a staging clone first, perform the full financial and authoriz
 - The free ipwho.is endpoint permits commercial use but has a 1,000-request/day limit. For sustained production traffic, prefer Cloudflare IP Geolocation or a local/licensed MaxMind database and disable the remote fallback if appropriate.
 
 
-## Server-side Google translation
+## Offline translation
 
-Public and authentication pages can be translated with Google Cloud Translation without loading the Google website widget in the browser.
+Public and authentication pages use locally installed Argos Translate models. No Google API key, browser translation widget, remote translation API, or visible translation bar is required at runtime.
 
-1. Enable Cloud Translation API in a Google Cloud project.
-2. Create/restrict an API key for the Cloud Translation API.
-3. Set:
-   - `GOOGLE_TRANSLATE_ENABLED=true`
-   - `GOOGLE_TRANSLATE_API_KEY=...`
-4. Clear `storage/cache`.
+Install once on the server:
 
-Translations are cached by language and source text. The API key stays server-side and is sent in the `X-goog-api-key` request header.
+```bash
+python3 -m venv /home/admin/argos-venv
+/home/admin/argos-venv/bin/pip install --upgrade pip argostranslate
+/home/admin/argos-venv/bin/python bin/install-translation-models.py
+```
+
+Then set `TRANSLATION_PYTHON=/home/admin/argos-venv/bin/python` and `OFFLINE_TRANSLATION_ENABLED=true`. Rendered text fragments are cached under `storage/cache` after their first local translation.
 
 ## HTTPS and sessions
 
