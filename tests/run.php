@@ -53,9 +53,9 @@ test('exact money supports supported country currencies without float conversion
 echo "Tests passed. Database migration and seed verification require configured MySQL.\n";
 
 
-test('page translation leaves English unchanged when disabled', function (): void {
-    $service=new \App\Services\GooglePageTranslationService(
-        ['enabled'=>false,'api_key'=>''],
+test('offline page translation leaves English unchanged when disabled', function (): void {
+    $service=new \App\Services\OfflinePageTranslationService(
+        ['enabled'=>false,'python'=>'python3','script'=>BASE_PATH.'/bin/offline_translate.py'],
         new \App\Support\Cache(sys_get_temp_dir().'/advancedbroker-translation-test'),
         new \App\Support\Logger(sys_get_temp_dir().'/advancedbroker-translation-test-logs')
     );
@@ -63,16 +63,15 @@ test('page translation leaves English unchanged when disabled', function (): voi
     expect($service->translateHtml($html,'de')===$html);
 });
 
-test('page translation leaves English target unchanged', function (): void {
-    $service=new \App\Services\GooglePageTranslationService(
-        ['enabled'=>true,'api_key'=>'test'],
+test('offline page translation leaves English target unchanged', function (): void {
+    $service=new \App\Services\OfflinePageTranslationService(
+        ['enabled'=>true,'python'=>'python3','script'=>BASE_PATH.'/bin/offline_translate.py'],
         new \App\Support\Cache(sys_get_temp_dir().'/advancedbroker-translation-test'),
         new \App\Support\Logger(sys_get_temp_dir().'/advancedbroker-translation-test-logs')
     );
     $html='<html lang="en"><body><h1>Hello investor</h1></body></html>';
     expect($service->translateHtml($html,'en')===$html);
 });
-
 
 test('AI trading USD quote produces fixed 50 percent profit', function (): void {
     $config=require BASE_PATH.'/config/ai_trading.php';

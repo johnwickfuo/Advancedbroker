@@ -1,2 +1,22 @@
-<?php $currentUser=app('users')->find((int)($_SESSION['user_id']??0));$marketName=country()->isGlobal()?null:country()->name(); ?>
-<!doctype html><html lang="<?= e(country()->languageCode) ?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= e(($title ?? '') . ' · ' . config('app.name')) ?></title><link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>"><style nonce="<?= e(app('theme')->nonce()) ?>"><?= app('theme')->css(country()->theme()) ?></style></head><body class="app-shell"><aside class="dashboard-sidebar"><a class="brand" href="<?= e(route('home')) ?>">UPGRADED<span>BROKER</span></a><div class="nav-account-context"><span><?= $marketName?'Account market':'Account currency' ?></span><strong><?= $marketName?e($marketName).' · ':'' ?><?= e(country()->currencyCode()) ?></strong></div><nav class="dashboard-nav"><a href="<?= e(route('dashboard.index')) ?>">Overview</a><a href="<?= e(route('dashboard.investments')) ?>">Investments</a><a href="<?= e(route('dashboard.ai-trading')) ?>">AI Trading</a><a href="<?= e(route('dashboard.portfolio')) ?>">Portfolio</a><a href="<?= e(route('dashboard.deposit')) ?>">Deposit</a><a href="<?= e(route('dashboard.withdraw')) ?>">Withdraw</a><a href="<?= e(route('dashboard.transactions')) ?>">Transactions</a><a href="<?= e(route('dashboard.kyc')) ?>">KYC</a><a href="<?= e(route('dashboard.notifications')) ?>">Notifications</a><a href="<?= e(route('dashboard.profile')) ?>">Profile</a><a href="<?= e(route('dashboard.security')) ?>">Security</a></nav></aside><section class="workspace"><header><button class="icon-button" data-menu aria-label="Open navigation">☰</button><a href="<?= e(route('home')) ?>">View website</a><div class="header-account"><span><?= e($currentUser['first_name']??'Account') ?></span><a class="avatar" href="<?= e(route('dashboard.profile')) ?>"><?= e(strtoupper(substr((string)($currentUser['first_name']??'A'),0,1))) ?></a></div></header><main><?php require __DIR__ . '/../partials/flash.php'; ?><?= $content ?></main></section><script src="<?= e(asset('js/app.js')) ?>" defer></script></body></html>
+<?php $currentUser=app('users')->find((int)($_SESSION['user_id']??0)); ?>
+<!doctype html>
+<html lang="<?= e(country()->languageCode) ?>">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title><?= e(($title ?? '') . ' · ' . config('app.name')) ?></title>
+<link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+<style nonce="<?= e(app('theme')->nonce()) ?>"><?= app('theme')->css(country()->theme()) ?></style>
+</head>
+<body class="app-shell brokerage-shell">
+<?php require __DIR__.'/../partials/user-sidebar.php'; ?>
+<section class="workspace brokerage-workspace">
+  <header class="workspace-topbar">
+    <button class="icon-button" data-menu aria-label="Open navigation">☰</button>
+    <div class="workspace-search"><a href="<?= e(route('companies.index')) ?>">Search investments</a></div>
+    <div class="header-account"><span><?= e($currentUser['first_name']??'Account') ?></span><a class="avatar" href="<?= e(route('dashboard.profile')) ?>"><?= e(strtoupper(substr((string)($currentUser['first_name']??'A'),0,1))) ?></a></div>
+  </header>
+  <?php require __DIR__.'/../partials/popups.php'; ?>
+  <main><?php require __DIR__.'/../partials/flash.php'; ?><?= $content ?></main>
+</section>
+<script src="<?= e(asset('js/app.js')) ?>" defer></script>
+</body></html>
