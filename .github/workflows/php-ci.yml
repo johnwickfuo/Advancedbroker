@@ -127,7 +127,7 @@ jobs:
         run: |
           php -S 127.0.0.1:8000 -t public > /tmp/advancedbroker-server.log 2>&1 &
           SERVER_PID=$!
-          trap 'kill $SERVER_PID || true' EXIT
+          trap 'STATUS=$?; if [ $STATUS -ne 0 ]; then echo "--- PHP server log ---"; cat /tmp/advancedbroker-server.log || true; echo "--- application logs ---"; find storage/logs -type f -maxdepth 1 -print -exec tail -n 100 {} \; 2>/dev/null || true; fi; kill $SERVER_PID || true; exit $STATUS' EXIT
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:8000/ > /tmp/home.html
           curl --fail --silent --show-error http://127.0.0.1:8000/login > /tmp/login.html

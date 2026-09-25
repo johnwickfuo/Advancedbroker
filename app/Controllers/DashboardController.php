@@ -14,7 +14,7 @@ final class DashboardController extends Controller {
             'user'=>$user,
             'wallet'=>$wallet,
             'notice'=>$notice,
-            'portfolio'=>app('investments')->portfolioSummary((int)$user['id']),
+            'portfolio'=>app('investments')->portfolio((int)$user['id']),
             'kycApproved'=>app('kyc')->approved((int)$user['id'],$country),
             'aiTrades'=>app('ai_trading')->activeForUser((int)$user['id'],4),
             'featuredCompanies'=>app('companies')->featured(country(),5),
