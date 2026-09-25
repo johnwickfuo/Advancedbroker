@@ -19,4 +19,5 @@
   <main><?php require __DIR__.'/../partials/flash.php'; ?><?= $content ?></main>
 </section>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
+<?php require __DIR__.'/../partials/smartsupp.php'; ?>
 </body></html>
