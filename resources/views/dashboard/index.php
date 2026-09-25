@@ -1,1 +1,18 @@
 <?php $marketName=country()->isGlobal()?null:country()->name(); ?><div class="dashboard-page-head"><div><p class="eyebrow">Account overview</p><h1>Welcome back, <?= e($user['first_name'] ?? 'Investor') ?>.</h1><p class="muted">A current view of your available funds, investments and account activity.</p></div></div><?php if($notice): ?><div class="alert alert-warning"><?= e($notice) ?></div><?php endif; ?><div class="grid four dashboard-metrics"><article class="metric"><span>Available cash</span><strong><?= money((int)$wallet['available_balance_minor']) ?></strong></article><article class="metric"><span>Active principal</span><strong><?= money((int)($portfolio['active_principal']??0)) ?></strong></article><article class="metric"><span>Projected profit</span><strong><?= money((int)($portfolio['projected_profit']??0)) ?></strong></article><article class="metric"><span>Realized profit</span><strong><?= money((int)($portfolio['realized_profit']??0)) ?></strong></article></div><div class="grid two dashboard-split"><section class="card dashboard-card"><p class="section-label">Account</p><h2>Account standing</h2><dl class="detail-list"><dt><?= $marketName?'Account market':'Account currency' ?></dt><dd><?= $marketName?e($marketName).' · ':'' ?><?= e(country()->currencyCode()) ?></dd><dt>Interface language</dt><dd><?= e(strtoupper(country()->languageCode)) ?></dd><dt>Account status</dt><dd><span class="badge badge-<?= e(strtolower($user['account_status'])) ?>"><?= e(ucfirst($user['account_status'])) ?></span></dd><dt>Email</dt><dd><?= !empty($user['email_verified_at'])?'Verified':'Not verified' ?></dd><dt>KYC</dt><dd><?= $kycApproved?'Approved':'Not approved' ?></dd><dt>Unread notifications</dt><dd><?= e($notificationCount) ?></dd></dl></section><section class="card dashboard-card"><p class="section-label">Shortcuts</p><h2>Quick actions</h2><div class="quick-actions"><a href="<?= e(route('dashboard.investments')) ?>">Explore investments <span>→</span></a><a href="<?= e(route('dashboard.deposit')) ?>">Deposit <span>→</span></a><a href="<?= e(route('dashboard.withdraw')) ?>">Withdraw <span>→</span></a><a href="<?= e(route('dashboard.kyc')) ?>">KYC <span>→</span></a></div><h3>Recent notifications</h3><?php if(!$notifications): ?><p class="muted">No notifications yet.</p><?php else: foreach($notifications as $notification): ?><div class="notification-preview"><strong><?= e($notification['title']) ?></strong><span><?= e($notification['body']) ?></span></div><?php endforeach; endif; ?></section></div>
+
+<?php if(!empty($aiTrades)): ?>
+<section class="dashboard-ai-section">
+<div class="section-heading-inline"><div><p class="section-label">AI trading</p><h2>Active AI trading cycles</h2></div><a class="home-inline-link" href="<?= e(route('dashboard.ai-trading')) ?>">View all AI trades →</a></div>
+<div class="dashboard-ai-grid">
+<?php foreach($aiTrades as $trade): ?>
+<article class="card dashboard-ai-card">
+<div class="ai-owned-head"><span class="badge"><?= e($trade['status']) ?></span><span><?= e($trade['category_name']) ?></span></div>
+<h3><?= e($trade['category_name']) ?></h3>
+<div class="ai-progress-meta"><span><?= e(number_format((float)$trade['progress_percent'],1)) ?>%</span><strong><?= $trade['status']==='PURCHASED'?'Waiting for activation':'In progress' ?></strong></div>
+<div class="ai-progress"><i style="width:<?= e(min(100,max(0,(float)$trade['progress_percent']))) ?>%"></i></div>
+<a class="company-card-cta" href="<?= e(route('dashboard.ai-trading.show',['purchase'=>$trade['public_id']])) ?>"><?= $trade['status']==='PURCHASED'?'Activate code':'View progress' ?><span>→</span></a>
+</article>
+<?php endforeach; ?>
+</div>
+</section>
+<?php endif; ?>

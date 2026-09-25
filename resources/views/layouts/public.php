@@ -23,6 +23,7 @@ $extra_css = $extra_css ?? [];
     <a class="brand notranslate" translate="no" href="<?= e(route('home')) ?>"><?= e($branding['short_name']??'UPGRADED BROKER') ?></a>
     <nav aria-label="Primary">
         <a href="<?= e(route('companies.index')) ?>">Investments</a>
+        <a href="<?= e(route('ai-trading.catalogue')) ?>">AI Trading</a>
         <a href="<?= e(route('how-it-works')) ?>">How it works</a>
         <a href="<?= e(route('about')) ?>">About</a>
         <a href="<?= e(route('faq')) ?>">FAQ</a>
@@ -47,7 +48,7 @@ $extra_css = $extra_css ?? [];
             <p><?= e($branding['footer_text'] ?: 'Investment opportunities presented with clear terms, company context and organised account records.') ?></p>
             <?php if($branding['support_email']): ?><a href="mailto:<?= e($branding['support_email']) ?>"><?= e($branding['support_email']) ?></a><?php endif; ?>
         </div>
-        <div><h3>Invest</h3><a href="<?= e(route('companies.index')) ?>">Investment opportunities</a><a href="<?= e(route('how-it-works')) ?>">How it works</a><a href="<?= e(route('register')) ?>">Create account</a><a href="<?= e(route('login')) ?>">Sign in</a></div>
+        <div><h3>Invest</h3><a href="<?= e(route('companies.index')) ?>">Investment opportunities</a><a href="<?= e(route('ai-trading.catalogue')) ?>">AI Trading Codes</a><a href="<?= e(route('how-it-works')) ?>">How it works</a><a href="<?= e(route('register')) ?>">Create account</a><a href="<?= e(route('login')) ?>">Sign in</a></div>
         <div><h3>Company</h3><a href="<?= e(route('about')) ?>">About</a><a href="<?= e(route('faq')) ?>">FAQ</a><a href="<?= e(route('contact')) ?>">Contact</a><a href="<?= e(route('license')) ?>">Licence information</a></div>
         <div><h3>Legal</h3><a href="<?= e(route('terms')) ?>">Terms</a><a href="<?= e(route('privacy')) ?>">Privacy</a><a href="<?= e(route('risk-disclosure')) ?>">Risk disclosure</a></div>
     </div>

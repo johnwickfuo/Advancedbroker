@@ -72,3 +72,23 @@ test('page translation leaves English target unchanged', function (): void {
     $html='<html lang="en"><body><h1>Hello investor</h1></body></html>';
     expect($service->translateHtml($html,'en')===$html);
 });
+
+
+test('AI trading USD quote produces fixed 50 percent profit', function (): void {
+    $config=require BASE_PATH.'/config/ai_trading.php';
+    $service=new \App\Services\AiTradingService(null,new \App\Services\WalletService(null),new \App\Services\NotificationService(null),new \App\Security\Crypto('test-key'),$config);
+    $quote=$service->quote(['price_usd_minor'=>10000,'profit_percent'=>'50.0000'],'USD');
+    expect($quote['purchase_amount_minor']===10000 && $quote['profit_amount_minor']===5000 && $quote['maturity_payout_minor']===15000);
+});
+
+test('AI trading EUR quote uses frozen build rate', function (): void {
+    $config=require BASE_PATH.'/config/ai_trading.php';
+    $service=new \App\Services\AiTradingService(null,new \App\Services\WalletService(null),new \App\Services\NotificationService(null),new \App\Security\Crypto('test-key'),$config);
+    $quote=$service->quote(['price_usd_minor'=>10000,'profit_percent'=>'50.0000'],'EUR');
+    expect($quote['purchase_amount_minor']===8791 && $quote['profit_amount_minor']===4396 && $quote['maturity_payout_minor']===13187 && $quote['fx_snapshot_date']==='2026-09-25');
+});
+
+test('AI trading FX snapshot covers every supported market currency', function (): void {
+    $rates=(require BASE_PATH.'/config/ai_trading.php')['rates'];
+    foreach(['GBP','EUR','CHF','SEK','NOK','DKK','USD','CAD','BRL','MXN','JPY','KRW','SGD','HKD','INR','AUD','NZD','ZAR','AED','SAR','PLN','PHP','TTD','JMD','BBD'] as $currency) expect(isset($rates[$currency]) && $rates[$currency]>0);
+});

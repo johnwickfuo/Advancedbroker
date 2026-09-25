@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
-use App\Controllers\{AuthController,CompanyController,DashboardController,FinancialController,HomeController,InvestmentController,KycController,MediaController,NotificationController,PasswordController,ProfileController,PublicContentController,SecurityController,TwoFactorController,WithdrawalController}; use App\Middleware\{AuthMiddleware,CountryAvailabilityMiddleware,GuestMiddleware,SuspendedAccountMiddleware,VerifiedEmailMiddleware}; use App\Support\{Request,Router};
+use App\Controllers\{AiTradingController,AuthController,CompanyController,DashboardController,FinancialController,HomeController,InvestmentController,KycController,MediaController,NotificationController,PasswordController,ProfileController,PublicContentController,SecurityController,TwoFactorController,WithdrawalController}; use App\Middleware\{AuthMiddleware,CountryAvailabilityMiddleware,GuestMiddleware,SuspendedAccountMiddleware,VerifiedEmailMiddleware}; use App\Support\{Request,Router};
 /** @var Router $router */
 $router->get('/', [HomeController::class, 'index'], 'home');
 $router->post('/language', [\App\Controllers\LanguageController::class, 'update'], 'language.update');
+$router->get('/ai-trading',[AiTradingController::class,'catalogue'],'ai-trading.catalogue');
 $router->get('/companies',[CompanyController::class,'index'],'companies.index');$router->get('/companies/{company}',[CompanyController::class,'show'],'companies.show');
 $router->get('/about',[PublicContentController::class,'page'],'about');$router->get('/how-it-works',[PublicContentController::class,'page'],'how-it-works');$router->get('/faq',[PublicContentController::class,'faq'],'faq');$router->get('/contact',[PublicContentController::class,'contact'],'contact');$router->post('/contact',[PublicContentController::class,'submitContact'],'contact.submit');$router->get('/license',[PublicContentController::class,'license'],'license');
 $router->get('/terms',fn(Request $r)=>app(PublicContentController::class)->legal(new Request($r->method,'/terms',[],['type'=>'terms'],[],[])),'terms');
@@ -20,8 +21,10 @@ $router->group(['middleware'=>[GuestMiddleware::class]],function(Router $router)
 $router->get('/verify-email',[AuthController::class,'verify'],'verify-email');$router->post('/verify-email',[AuthController::class,'confirmVerification'],'verify-email.confirm');
 $router->group(['middleware'=>[AuthMiddleware::class,VerifiedEmailMiddleware::class,SuspendedAccountMiddleware::class,CountryAvailabilityMiddleware::class]],function(Router $router):void{
     $router->post('/logout',[AuthController::class,'logout'],'logout');
+    $router->post('/ai-trading/{category}/buy',[AiTradingController::class,'buy'],'ai-trading.buy');
     $router->group(['prefix'=>'/dashboard','as'=>'dashboard.'],function(Router $router):void{
         $router->get('/',[DashboardController::class,'index'],'index');
+        $router->get('/ai-trading',[AiTradingController::class,'dashboard'],'ai-trading');$router->get('/ai-trading/{purchase}',[AiTradingController::class,'show'],'ai-trading.show');$router->post('/ai-trading/{purchase}/activate',[AiTradingController::class,'activate'],'ai-trading.activate');
         $router->get('/profile',[ProfileController::class,'edit'],'profile');$router->post('/profile',[ProfileController::class,'update'],'profile.update');
         $router->get('/security',[SecurityController::class,'index'],'security');$router->post('/security/password',[PasswordController::class,'update'],'security.password');$router->post('/security/resend-verification',[AuthController::class,'resendVerification'],'security.resend-verification');
         $router->post('/security/sessions/{session}/revoke',[SecurityController::class,'revoke'],'security.session.revoke');$router->post('/security/sessions/revoke-others',[SecurityController::class,'revokeOthers'],'security.sessions.revoke-others');

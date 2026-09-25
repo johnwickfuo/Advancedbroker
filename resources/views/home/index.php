@@ -73,6 +73,23 @@ $marketLabel = $country->isGlobal() ? null : $country->name();
 
 <?php if(!empty($featured_sectors)): ?><section class="home-section home-sectors"><p class="section-label">Explore by sector</p><div class="sector-row"><?php foreach($featured_sectors as $sector): ?><a href="<?= e(route('companies.index').'?industry='.urlencode($sector)) ?>"><?= e($sector) ?><span>↗</span></a><?php endforeach; ?></div></section><?php endif; ?>
 
+
+<section class="home-ai-trading">
+  <div class="home-ai-copy">
+    <p class="section-label">AI Trading Codes</p>
+    <h2>A fixed-profit trading cycle activated by your unique code.</h2>
+    <p>Choose an AI trading category with a defined price, guaranteed fixed-profit rate and duration. After purchase, you receive one unique single-use code. Enter that code when you are ready to activate the cycle; only then does the timer begin.</p>
+    <p>Once activated, your dashboard shows a percentage-based progress bar from 0% to 100%. At scheduled completion, the platform credits your original purchase amount plus the fixed profit specified for that category.</p>
+    <div class="ai-home-actions"><a class="button" href="<?= e(route('ai-trading.catalogue')) ?>">Explore AI Trading Codes</a><?php if(empty($_SESSION['user_id'])): ?><a class="home-inline-link" href="<?= e(route('register')) ?>">Create an account →</a><?php endif; ?></div>
+  </div>
+  <div class="home-ai-visual" aria-hidden="true">
+    <div class="ai-home-chip"><span>AI CODE</span><strong>AI-4F7A-91C2-B830</strong></div>
+    <div class="ai-home-profit"><span>Fixed profit</span><strong>+50%</strong></div>
+    <div class="ai-home-progress"><span>AI trading progress</span><div><i></i></div><small>68% complete</small></div>
+    <div class="ai-home-steps"><b>Purchase</b><b>Activate</b><b>Complete</b></div>
+  </div>
+</section>
+
 <section class="home-section home-why"><div class="home-two-col"><div class="why-copy"><p class="section-label">Why this platform</p><h2><?= e($experience['whyTitle']) ?></h2><p><?= e($experience['whyBody']) ?></p></div><div class="why-grid"><article><span>01</span><h3>Company context</h3><p>Understand what the business does and review the information recorded for the company.</p></article><article><span>02</span><h3>Visible terms</h3><p>See investment price, projected outcome, duration and other configured terms before purchase.</p></article><article><span>03</span><h3>Account records</h3><p>Keep transaction and investment activity organised in a single account experience.</p></article><article><span>04</span><h3>Your decision</h3><p>The platform presents information and structure; it does not turn projections into promises.</p></article></div></div></section>
 
 <section class="home-section home-process"><div class="home-section-heading"><div><p class="section-label">How it works</p><h2>From account setup to portfolio tracking.</h2></div><p>A straightforward process keeps each stage of the investment journey understandable.</p></div><div class="process-grid"><?php foreach($experience['process'] as $step): ?><article><span><?= e($step[0]) ?></span><h3><?= e($step[1]) ?></h3><p><?= e($step[2]) ?></p></article><?php endforeach; ?></div><a class="home-inline-link" href="<?= e(route('how-it-works')) ?>">See the complete process →</a></section>
