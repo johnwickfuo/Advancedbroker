@@ -11,10 +11,11 @@ final class AdminUserController extends Controller {
         if(!$user)return Response::redirect(route('admin.users.index'));
         $title=trim((string)$request->input('title',''));
         $body=trim((string)$request->input('body',''));
+        $repeat=max(1,min(100,(int)$request->input('repeat_count',1)));
         if($title===''||$body==='')return $this->bad('Popup title and message are required.',$user);
-        app('notifications')->create((int)$user['id'],'admin_popup',$title,$body);
-        app('audit')->record((int)$_SESSION['user_id'],'user.popup_sent','user',(int)$user['id'],[],['title'=>$title],null,$request);
-        $this->flash('success','Popup notification queued for '.$user['email'].'.');
+        app('notifications')->create((int)$user['id'],'admin_popup',$title,$body,[],$repeat);
+        app('audit')->record((int)$_SESSION['user_id'],'user.popup_sent','user',(int)$user['id'],[],['title'=>$title,'repeat_count'=>$repeat],null,$request);
+        $this->flash('success','Popup notification queued for '.$user['email'].' and will appear '.$repeat.' time'.($repeat===1?'':'s').'.');
         return Response::redirect(route('admin.users.show',['user'=>$user['id']]));
     }
     public function email(Request $request): Response {
