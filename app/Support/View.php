@@ -7,17 +7,6 @@ final class View {
         $content = $this->file($view, $data);
         $html = $this->file($layout, array_merge($data, ['content' => $content]));
 
-        if (in_array($layout, ['layouts.public','layouts.auth','layouts.dashboard'], true)) {
-            try {
-                $context = country();
-                if ($context->languageCode !== 'en') {
-                    $html = app('page_translation')->translateHtml($html, $context->languageCode);
-                }
-            } catch (\Throwable $e) {
-                try { app('logger')->error('Page translation failed; serving source language.', ['message'=>$e->getMessage()]); } catch (\Throwable) {}
-            }
-        }
-
         return $html;
     }
     public function partial(string $view, array $data = []): string { return $this->file($view, $data); }
