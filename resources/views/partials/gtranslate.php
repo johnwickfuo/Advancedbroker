@@ -55,12 +55,23 @@ $gtCountryId=$gtContext->id();
   try{previousCountry=localStorage.getItem("apex_gtranslate_country");}catch(e){}
 
   var current=getCookie("googtrans");
-  var shouldAutoApply=previousCountry!==countryId || current!==desired;
+  var countryChanged=previousCountry!==countryId;
+  var hasNoChoice=current==="";
 
-  if(shouldAutoApply){
+  /*
+   * If the cookie already matches the Country Pack, we still need to trigger
+   * the actual translation engine. A matching cookie alone can update the
+   * GTranslate selector without translating the document.
+   *
+   * If the visitor manually selected another language inside the same Country
+   * Pack, preserve that manual choice.
+   */
+  var shouldAutoApply=countryChanged || hasNoChoice || current===desired;
+
+  if(countryChanged || hasNoChoice){
     setTranslateCookie(target);
-    try{localStorage.setItem("apex_gtranslate_country",countryId);}catch(e){}
   }
+  try{localStorage.setItem("apex_gtranslate_country",countryId);}catch(e){}
 
   window.apexGTranslateAutoApply=shouldAutoApply;
   window.apexGTranslateTarget=target;
