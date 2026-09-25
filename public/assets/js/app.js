@@ -10,3 +10,20 @@ document.addEventListener('click', async (event) => { const button = event.targe
 
 document.querySelectorAll('[data-popup-close]').forEach((button)=>button.addEventListener('click',()=>button.closest('[data-popup]')?.remove()));
 document.querySelectorAll('[data-popup]').forEach((popup,index)=>{ setTimeout(()=>{ popup.classList.add('popup-visible'); },120*index); setTimeout(()=>{ popup.classList.add('popup-leaving'); setTimeout(()=>popup.remove(),320); },9000+(index*800)); });
+
+const modalLayer=document.querySelector('[data-popup-modal-layer]');
+if(modalLayer){
+  document.body.classList.add('popup-modal-open');
+  const syncModalState=()=>{
+    if(!modalLayer.querySelector('[data-popup-modal]')){
+      modalLayer.remove();
+      document.body.classList.remove('popup-modal-open');
+    }
+  };
+  modalLayer.querySelectorAll('[data-popup-modal-close]').forEach((button)=>{
+    button.addEventListener('click',()=>{
+      button.closest('[data-popup-modal]')?.remove();
+      syncModalState();
+    });
+  });
+}
