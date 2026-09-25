@@ -14,6 +14,44 @@ final class NotificationService {
         );
     }
 
+    public function transactional(int $userId,string $type,string $title,string $body='',array $data=[]): void {
+        $this->create($userId,$type,$title,$body,$data);
+        $this->sendTransactionalEmail($userId,$type,$title,$body,$data);
+    }
+
+    private function sendTransactionalEmail(int $userId,string $type,string $title,string $body,array $data): void {
+        if(!$this->db) return;
+        $user=$this->db->one('SELECT id,email,first_name FROM users WHERE id=? LIMIT 1',[$userId]);
+        if(!$user||!filter_var((string)$user['email'],FILTER_VALIDATE_EMAIL)) return;
+        $target='';
+        if(!empty($data['url'])&&is_string($data['url'])){
+            $target=str_starts_with($data['url'],'http://')||str_starts_with($data['url'],'https://')?$data['url']:url($data['url']);
+        }
+        $status=strtolower((string)config('mail.driver','smtp'))==='log'?'LOGGED':'SENT';
+        try{
+            app('mail')->send(
+                (string)$user['email'],
+                $title.' · '.config('app.name'),
+                'transactional-notification',
+                ['name'=>(string)($user['first_name']??''),'heading'=>$title,'message'=>$body,'url'=>$target]
+            );
+            try{
+                $this->db->execute(
+                    'INSERT INTO email_delivery_logs(user_id,template_key,recipient,delivery_status,related_entity_type,related_entity_id,sent_at,created_at) VALUES (?,?,?,?,?,?,NOW(),NOW())',
+                    [$userId,'notification.'.$type,(string)$user['email'],$status,'notification',$type]
+                );
+            }catch(\Throwable){/* Email logging is best-effort. */}
+        }catch(\Throwable $e){
+            try{
+                $this->db->execute(
+                    'INSERT INTO email_delivery_logs(user_id,template_key,recipient,delivery_status,related_entity_type,related_entity_id,failure_reason,created_at) VALUES (?,?,?,?,?,?,?,NOW())',
+                    [$userId,'notification.'.$type,(string)$user['email'],'FAILED','notification',$type,mb_substr($e->getMessage(),0,500)]
+                );
+            }catch(\Throwable){/* Email logging is best-effort. */}
+            try{app('logger')->error('Transactional email failed',['user_id'=>$userId,'type'=>$type,'message'=>$e->getMessage()]);}catch(\Throwable){}
+        }
+    }
+
     public function consumePopups(int $userId,int $limit=6): array {
         if(!$this->db) return [];
         return $this->db->transaction(function(Database $db)use($userId,$limit){
