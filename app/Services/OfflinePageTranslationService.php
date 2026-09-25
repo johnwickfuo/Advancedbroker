@@ -74,7 +74,18 @@ final class OfflinePageTranslationService
         if($script===''||!is_file($script)||!function_exists('proc_open')) return null;
         $cmd=escapeshellcmd($python).' '.escapeshellarg($script).' '.escapeshellarg($target);
         $pipes=[];
-        $proc=@proc_open($cmd,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,null,['PYTHONUNBUFFERED'=>'1']);
+        foreach(['packages_dir','xdg_data_home','xdg_config_home','xdg_cache_home'] as $key){
+            $path=trim((string)($this->config[$key]??''));
+            if($path!==''&&!is_dir($path))@mkdir($path,0750,true);
+        }
+        $env=getenv();
+        if(!is_array($env))$env=[];
+        $env['PYTHONUNBUFFERED']='1';
+        $env['ARGOS_PACKAGES_DIR']=(string)($this->config['packages_dir']??'');
+        $env['XDG_DATA_HOME']=(string)($this->config['xdg_data_home']??'');
+        $env['XDG_CONFIG_HOME']=(string)($this->config['xdg_config_home']??'');
+        $env['XDG_CACHE_HOME']=(string)($this->config['xdg_cache_home']??'');
+        $proc=@proc_open($cmd,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,null,$env);
         if(!is_resource($proc)) return null;
         fwrite($pipes[0],json_encode($texts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)?:'[]'); fclose($pipes[0]);
         $stdout=stream_get_contents($pipes[1]); fclose($pipes[1]);

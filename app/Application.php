@@ -56,14 +56,6 @@ final class Application {
         if ((string)config('app.env') !== 'production') return false;
         if (!str_starts_with((string)config('app.url'),'https://')) return false;
 
-        $https = strtolower((string)($_SERVER['HTTPS'] ?? ''));
-        if ($https !== '' && $https !== 'off' && $https !== '0') return false;
-        if ((int)($_SERVER['SERVER_PORT'] ?? 0) === 443) return false;
-
-        $remote=(string)($_SERVER['REMOTE_ADDR'] ?? '');
-        $forwarded=strtolower(trim(explode(',',(string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0] ?? ''));
-        if (in_array($remote,['127.0.0.1','::1'],true) && $forwarded==='https') return false;
-
-        return true;
+        return !Session::requestIsHttps((array)config('app.session',[]));
     }
 }

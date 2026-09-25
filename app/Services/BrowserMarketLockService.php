@@ -43,7 +43,7 @@ final class BrowserMarketLockService
         setcookie(self::COOKIE, $value, [
             'expires' => $expires,
             'path' => '/',
-            'secure' => (bool)config('app.session.secure'),
+            'secure' => \App\Security\Session::cookieShouldBeSecure((array)config('app.session',[])),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
@@ -57,7 +57,7 @@ final class BrowserMarketLockService
         setcookie(self::COOKIE, '', [
             'expires' => time() - 3600,
             'path' => '/',
-            'secure' => (bool)config('app.session.secure'),
+            'secure' => \App\Security\Session::cookieShouldBeSecure((array)config('app.session',[])),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
