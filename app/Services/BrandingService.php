@@ -7,7 +7,7 @@ use App\Support\Database;
 final class BrandingService {
     public function __construct(private ?Database $db) {}
     public function forCountry(array $country): array {
-        $defaults=['brand_name'=>(string)config('app.name'),'short_name'=>strtoupper((string)config('app.name')),'support_email'=>null,'support_phone'=>null,'support_whatsapp'=>null,'business_address'=>null,'support_hours'=>null,'contact_text'=>null,'footer_text'=>null,'social_links'=>[],'meta_title'=>null,'meta_description'=>null,'logo_asset_id'=>null,'dark_logo_asset_id'=>null,'favicon_asset_id'=>null];
+        $defaults=['brand_name'=>'ApexTrades','short_name'=>'APEXTRADES','support_email'=>null,'support_phone'=>null,'support_whatsapp'=>null,'business_address'=>null,'support_hours'=>null,'contact_text'=>null,'footer_text'=>null,'social_links'=>[],'meta_title'=>null,'meta_description'=>null,'logo_asset_id'=>null,'dark_logo_asset_id'=>null,'favicon_asset_id'=>null];
         if(!$this->db)return $defaults;
         $global=$this->db->one('SELECT b.* FROM country_branding b JOIN countries c ON c.id=b.country_id WHERE c.is_global=1 LIMIT 1')??[];
         $local=$this->db->one('SELECT * FROM country_branding WHERE country_id=? LIMIT 1',[(int)$country['id']])??[];
