@@ -53,24 +53,13 @@ test('exact money supports supported country currencies without float conversion
 echo "Tests passed. Database migration and seed verification require configured MySQL.\n";
 
 
-test('offline page translation leaves English unchanged when disabled', function (): void {
-    $service=new \App\Services\OfflinePageTranslationService(
-        ['enabled'=>false,'python'=>'python3','script'=>BASE_PATH.'/bin/offline_translate.py'],
-        new \App\Support\Cache(sys_get_temp_dir().'/advancedbroker-translation-test'),
-        new \App\Support\Logger(sys_get_temp_dir().'/advancedbroker-translation-test-logs')
+test('public translation uses the GTranslate client widget', function (): void {
+    $widget=(string)file_get_contents(BASE_PATH.'/resources/views/partials/gtranslate.php');
+    expect(
+        str_contains($widget,'cdn.gtranslate.net/widgets/latest/dropdown.js')
+        && str_contains($widget,'window.gtranslateSettings')
+        && str_contains($widget,'apexGTranslateTarget')
     );
-    $html='<html lang="en"><body><h1>Hello investor</h1></body></html>';
-    expect($service->translateHtml($html,'de')===$html);
-});
-
-test('offline page translation leaves English target unchanged', function (): void {
-    $service=new \App\Services\OfflinePageTranslationService(
-        ['enabled'=>true,'python'=>'python3','script'=>BASE_PATH.'/bin/offline_translate.py'],
-        new \App\Support\Cache(sys_get_temp_dir().'/advancedbroker-translation-test'),
-        new \App\Support\Logger(sys_get_temp_dir().'/advancedbroker-translation-test-logs')
-    );
-    $html='<html lang="en"><body><h1>Hello investor</h1></body></html>';
-    expect($service->translateHtml($html,'en')===$html);
 });
 
 test('AI trading USD quote produces fixed 50 percent profit', function (): void {
