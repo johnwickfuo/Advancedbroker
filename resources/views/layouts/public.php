@@ -1,6 +1,5 @@
 <?php
 $context=country();
-$countryLanguages=app('countries')->languages($context->country);
 $isRtl=$context->languageCode==='ar';
 $branding=app('branding')->forCountry($context->country);
 $description??='';
@@ -39,12 +38,7 @@ window.smartsupp||(function(d) {
     <a href="<?= e(route('about')) ?>">About</a>
     <a href="<?= e(route('faq')) ?>">FAQ</a>
     <a href="<?= e(route('contact')) ?>">Contact</a>
-    <?php if(count($countryLanguages)>1): ?>
-      <form action="<?= e(route('language.update')) ?>" method="post" class="language-form notranslate" translate="no" data-auto-submit>
-        <?= app('csrf')->input() ?><input type="hidden" name="return_to" value="<?= e($_SERVER['REQUEST_URI']??'/') ?>">
-        <select name="language"><?php foreach($countryLanguages as $language): ?><option value="<?= e($language['code']) ?>"<?= $language['code']===$context->languageCode?' selected':'' ?>><?= e($language['native_name']) ?></option><?php endforeach; ?></select>
-      </form>
-    <?php endif; ?>
+    <?php require __DIR__.'/../partials/gtranslate.php'; ?>
     <?php if($currentUser): ?>
       <?php $isAdmin=($currentUser['role']??'')==='super_admin'; ?>
       <a class="button button-small" href="<?= e($isAdmin?route('admin.index'):route('dashboard.index')) ?>"><?= $isAdmin?'Admin':'Dashboard' ?></a>
