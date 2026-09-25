@@ -17,6 +17,22 @@ final class AdminUserController extends Controller {
         $this->flash('success','Popup notification queued for '.$user['email'].'.');
         return Response::redirect(route('admin.users.show',['user'=>$user['id']]));
     }
+    public function email(Request $request): Response {
+        $user=$this->target($request);
+        if(!$user)return Response::redirect(route('admin.users.index'));
+        $subject=trim((string)$request->input('subject',''));
+        $body=trim((string)$request->input('body',''));
+        if($subject===''||$body===''||mb_strlen($subject)>190||mb_strlen($body)>10000)return $this->bad('Enter a subject and message. Subject must be 190 characters or fewer and message 10,000 characters or fewer.',$user);
+        try{
+            app('mail')->send((string)$user['email'],$subject,'admin-message',['name'=>(string)($user['first_name']??''),'body'=>$body]);
+            app('audit')->record((int)$_SESSION['user_id'],'user.email_sent','user',(int)$user['id'],[],['subject'=>$subject],null,$request);
+            $this->flash('success','Email sent to '.$user['email'].'.');
+        }catch(\Throwable $e){
+            app('logger')->error('Admin user email failed',['user_id'=>(int)$user['id'],'message'=>$e->getMessage()]);
+            $this->flash('error','Email could not be sent. Check the site mail configuration and logs.');
+        }
+        return Response::redirect(route('admin.users.show',['user'=>$user['id']]));
+    }
     public function status(Request $request): Response { $user=$this->target($request);$status=strtolower((string)$request->input('account_status',''));$reason=trim((string)$request->input('reason',''));if(!$user||!in_array($status,['active','suspended','restricted'],true)||(($status==='suspended'||$status==='restricted')&&$reason===''))return $this->bad('Status and a reason are required for suspension or restriction.',$user);$old=['account_status'=>$user['account_status']];app('users')->update((int)$user['id'],['account_status'=>$status,'account_restriction_reason'=>$status==='active'?null:$reason]);app('audit')->record((int)$_SESSION['user_id'],'user.status_changed','user',(int)$user['id'],$old,['account_status'=>$status],$reason?:null,$request);if($status!=='active')app('sessions')->revokeAll((int)$user['id']);app('notifications')->create((int)$user['id'],'account_status','Account status updated',$status==='active'?'Your account is active.':'Your account has been '.$status.'.');$this->flash('success','Account status updated.');return Response::redirect(route('admin.users.show',['user'=>$user['id']])); }
     private function target(Request $request): ?array { $user=app('users')->find((int)$request->route('user'));return $user && $user['role']!=='super_admin'?$user:null; }
     private function bad(string $message,?array $user): Response { $this->flash('error',$message);return Response::redirect($user?route('admin.users.show',['user'=>$user['id']]):route('admin.users.index')); }
