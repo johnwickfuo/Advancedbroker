@@ -34,7 +34,8 @@ $currentUser=!empty($_SESSION['user_id'])?app('users')->find((int)$_SESSION['use
       </form>
     <?php endif; ?>
     <?php if($currentUser): ?>
-      <a class="button button-small" href="<?= e(route('dashboard.index')) ?>">Dashboard</a>
+      <?php $isAdmin=($currentUser['role']??'')==='super_admin'; ?>
+      <a class="button button-small" href="<?= e($isAdmin?route('admin.index'):route('dashboard.index')) ?>"><?= $isAdmin?'Admin':'Dashboard' ?></a>
     <?php else: ?>
       <a class="sign-in-link" href="<?= e(route('login')) ?>">Sign in</a><a class="button button-small" href="<?= e(route('register')) ?>">Get started</a>
     <?php endif; ?>
