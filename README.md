@@ -129,3 +129,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md), [DATABASE.md](DATABASE.md), [SECURITY.md](SE
 - `php tests/run.php` — foundation, Country Pack, password, crypto, TOTP, validation and account-access tests. Run the MySQL integration cases in `tests/FINANCIAL_INTEGRATION_TEST_PLAN.md` before production deployment.
 
 Do not commit secrets, GeoLite databases, private uploads or private documents.
+
+
+## Optional QA account
+
+For controlled testing, `php bin/seed.php` can create one normal, non-admin QA user when `QA_USER_ENABLED=true`. Credentials are supplied from environment variables and are never committed to source control. The QA user is active, email-verified, has an approved KYC record and receives one idempotent demo wallet credit so the normal investment/account flows can be exercised. Disable the QA seeder and remove or change weak test credentials before production launch.

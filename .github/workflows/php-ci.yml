@@ -80,6 +80,11 @@ jobs:
           GEOIP_DRIVER=maxmind
           GEOIP_DATABASE_PATH=
           TRUST_CLOUDFLARE_COUNTRY_HEADER=false
+          QA_USER_ENABLED=true
+          QA_USER_EMAIL=user@user.com
+          QA_USER_USERNAME=user
+          QA_USER_PASSWORD=12345
+          QA_USER_BALANCE=100000.00
           EOF
           mkdir -p storage/cache storage/logs storage/private storage/uploads
 
@@ -105,6 +110,9 @@ jobs:
 
       - name: Verify catalogue seed counts
         run: php bin/verify-seed.php
+
+      - name: Verify QA user seed
+        run: php bin/verify-qa-user.php
 
       - name: Application boot smoke test
         run: php -r 'require "vendor/autoload.php"; require "app/Support/helpers.php"; \App\Application::boot(getcwd()); echo "Application boot passed\n";'
