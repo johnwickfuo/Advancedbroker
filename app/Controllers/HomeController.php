@@ -12,7 +12,8 @@ final class HomeController extends Controller
     {
         $context = country();
         $experience = app('homepage_experience')->forCountry($context->country, $context->languageCode);
-        $featured = app('companies')->featured($context, 6);
+        $media = app('country_media')->forCountry($context->country);
+        $featured = app('companies')->featured($context, 5);
         $sectors = [];
         foreach ($featured as $company) {
             $sector = trim((string)($company['industry'] ?: $company['sector'] ?? ''));
@@ -24,6 +25,7 @@ final class HomeController extends Controller
             'description' => $experience['sub'],
             'country' => $context,
             'experience' => $experience,
+            'media' => $media,
             'featured_companies' => $featured,
             'featured_sectors' => array_keys($sectors),
         ]);
