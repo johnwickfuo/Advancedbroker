@@ -19,7 +19,7 @@ final class AiTradingService
     public function publicCategories(string $currencyCode): array
     {
         if(!$this->db) return [];
-        $rows=$this->db->select('SELECT * FROM ai_trading_categories WHERE is_active=1 ORDER BY price_usd_minor ASC,id ASC');
+        $rows=$this->db->select('SELECT * FROM ai_trading_categories WHERE is_active=1 ORDER BY price_usd_minor ASC,id ASC LIMIT 10');
         foreach($rows as &$row){
             $row['quote']=$this->quote($row,$currencyCode);
             $row['available_codes']=(int)$this->db->scalar('SELECT COUNT(*) FROM ai_trading_codes WHERE category_id=? AND status="AVAILABLE"',[$row['id']]);
