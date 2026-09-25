@@ -19,7 +19,7 @@ $marketLabel = $country->isGlobal() ? null : $country->name();
         <p class="home-risk-note">Investing involves risk. Projected returns are not guaranteed.</p>
     </div>
     <figure class="home-hero-photo">
-        <img src="<?= e($media['hero_url']) ?>" alt="<?= e($media['alt']) ?>" loading="eager" fetchpriority="high">
+        <img src="<?= e($media['hero_url']) ?>" alt="<?= e($media['alt']) ?>" loading="eager" fetchpriority="high" onerror="this.onerror=null;this.src='<?= e($media['fallback_hero_url']) ?>'">
         <figcaption>
             <?php if($marketLabel): ?><span><?= e($marketLabel) ?></span><?php else: ?><span>Investment perspective</span><?php endif; ?>
             <strong><?= e($country->currencyCode()) ?></strong>
@@ -47,7 +47,7 @@ $marketLabel = $country->isGlobal() ? null : $country->name();
 </section>
 
 <section class="home-market-image-band">
-    <img src="<?= e($media['card_url']) ?>" alt="<?= e($media['alt']) ?>" loading="lazy">
+    <img src="<?= e($media['card_url']) ?>" alt="<?= e($media['alt']) ?>" loading="lazy" onerror="this.onerror=null;this.src='<?= e($media['fallback_card_url']) ?>'">
     <div><p class="section-label">A clearer market view</p><h2>Research the business. Read the terms. Make your own decision.</h2></div>
 </section>
 
