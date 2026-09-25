@@ -17,11 +17,14 @@ final class CountryMediaService
         $photos = $this->photos();
         $photo = $photos[$key] ?? $photos['GLOBAL'];
         $id = $photo['id'];
+        $globalId = $photos['GLOBAL']['id'];
 
         return $photo + [
             'source_url' => 'https://unsplash.com/photos/' . $id,
             'hero_url' => 'https://unsplash.com/photos/' . $id . '/download?force=true&w=1800',
             'card_url' => 'https://unsplash.com/photos/' . $id . '/download?force=true&w=1200',
+            'fallback_hero_url' => 'https://unsplash.com/photos/' . $globalId . '/download?force=true&w=1800',
+            'fallback_card_url' => 'https://unsplash.com/photos/' . $globalId . '/download?force=true&w=1200',
         ];
     }
 
