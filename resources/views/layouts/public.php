@@ -16,6 +16,7 @@ $currentUser=!empty($_SESSION['user_id'])?app('users')->find((int)$_SESSION['use
 <title><?= e(($title??'').' · '.($branding['brand_name']??config('app.name'))) ?></title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <style nonce="<?= e(app('theme')->nonce()) ?>"><?= app('theme')->css($context->theme()) ?></style>
+<?php require __DIR__.'/../partials/smartsupp.php'; ?>
 </head>
 <body>
 <header class="site-header">
@@ -54,5 +55,4 @@ $currentUser=!empty($_SESSION['user_id'])?app('users')->find((int)$_SESSION['use
   <div class="footer-bottom"><span>© <?= date('Y') ?> <?= e($branding['brand_name']??config('app.name')) ?></span><span>Investing involves risk. Projected returns are not guaranteed.</span></div>
 </footer>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
-<?php require __DIR__.'/../partials/smartsupp.php'; ?>
 </body></html>
