@@ -8,8 +8,8 @@ use App\Support\Request;
 
 final class AuthService {
     public function __construct(private UserRepository $users,private SessionService $sessions,private SecurityEventService $events,private NotificationService $notifications) {}
-    public function attempt(string $email,string $password,bool $remember,Request $request): array {
-        $user=$this->users->byEmail($email);
+    public function attempt(string $login,string $password,bool $remember,Request $request): array {
+        $user=$this->users->byLogin($login);
         if(!$user||!PasswordHasher::verify($password,(string)$user['password_hash'])){ $this->events->record($user?(int)$user['id']:null,'login_failed',$request); return ['status'=>'invalid']; }
         if(!app('account_access')->canLogin($user)){ $this->events->record((int)$user['id'],'login_blocked',$request); return ['status'=>'blocked']; }
         if(PasswordHasher::needsRehash((string)$user['password_hash'])) $this->users->update((int)$user['id'],['password_hash'=>PasswordHasher::hash($password)]);

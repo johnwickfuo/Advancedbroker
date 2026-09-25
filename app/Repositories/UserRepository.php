@@ -8,6 +8,8 @@ final class UserRepository {
     public function __construct(private ?Database $db) {}
     public function find(int $id): ?array { return $this->one('u.id=?',[$id]); }
     public function byEmail(string $email): ?array { return $this->one('LOWER(u.email)=?', [strtolower(trim($email))]); }
+    public function byUsername(string $username): ?array { return $this->one('LOWER(u.username)=?', [strtolower(trim($username))]); }
+    public function byLogin(string $login): ?array { $login=trim($login); return str_contains($login,'@') ? $this->byEmail($login) : $this->byUsername($login); }
     public function create(array $data): array {
         if(!$this->db) throw new \RuntimeException('Database unavailable.');
         $fields=['uuid','username','first_name','last_name','phone','email','password_hash','country_id','assigned_country_id','country_assignment_source','original_country_id','preferred_language_id','detected_country_code','account_status','role','terms_accepted_at','terms_version','privacy_accepted_at','privacy_version','created_at','updated_at'];
