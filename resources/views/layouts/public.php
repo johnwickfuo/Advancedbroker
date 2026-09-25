@@ -20,7 +20,7 @@ $extra_css = $extra_css ?? [];
 </head>
 <body>
 <header class="site-header">
-    <a class="brand" href="<?= e(route('home')) ?>"><?= e($branding['short_name']??'UPGRADED BROKER') ?></a>
+    <a class="brand notranslate" translate="no" href="<?= e(route('home')) ?>"><?= e($branding['short_name']??'UPGRADED BROKER') ?></a>
     <nav aria-label="Primary">
         <a href="<?= e(route('companies.index')) ?>">Investments</a>
         <a href="<?= e(route('how-it-works')) ?>">How it works</a>
@@ -28,13 +28,13 @@ $extra_css = $extra_css ?? [];
         <a href="<?= e(route('faq')) ?>">FAQ</a>
         <a href="<?= e(route('contact')) ?>">Contact</a>
         <?php if(count($countryLanguages)>1): ?>
-        <form action="<?= e(route('language.update')) ?>" method="post" class="language-form" data-auto-submit>
+        <form action="<?= e(route('language.update')) ?>" method="post" class="language-form notranslate" translate="no" data-auto-submit>
             <?= app('csrf')->input() ?><input type="hidden" name="return_to" value="<?= e($_SERVER['REQUEST_URI'] ?? '/') ?>">
             <label class="sr-only" for="language">Language</label>
             <select id="language" name="language"><?php foreach ($countryLanguages as $language): ?><option value="<?= e($language['code']) ?>"<?= $language['code'] === $context->languageCode ? ' selected' : '' ?>><?= e($language['native_name']) ?></option><?php endforeach; ?></select>
         </form>
         <?php endif; ?>
-        <?php if(!empty($_SESSION['user_id'])): ?><a href="<?= e(route('dashboard.index')) ?>">Dashboard</a><?php else: ?><a href="<?= e(route('login')) ?>">Sign in</a><a class="button button-small" href="<?= e(route('register')) ?>">Get started</a><?php endif; ?>
+        <?php if(!empty($_SESSION['user_id'])): ?><a href="<?= e(route('dashboard.index')) ?>">Dashboard</a><?php else: ?><a class="sign-in-link" href="<?= e(route('login')) ?>">Sign in</a><a class="button button-small" href="<?= e(route('register')) ?>">Get started</a><?php endif; ?>
     </nav>
 </header>
 <?php require __DIR__ . '/../partials/flash.php'; ?>

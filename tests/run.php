@@ -51,3 +51,24 @@ test('calculator rejects fractional quantity when offering does not permit it',f
 test('amount-to-quantity conversion uses integer arithmetic',function():void{$c=new \App\Services\OfferingCalculator();$o=['share_price_minor'=>2500,'fractional_shares_allowed'=>1,'quantity_decimal_places'=>3];expect($c->quantityForAmount($o,10000)==='4.000');expect($c->quantityForAmount($o,1250)==='0.500');});
 test('exact money supports supported country currencies without float conversion',function():void{expect(Money::parse('10.01','GBP')->minor===1001);expect(Money::parse('999.99','EUR')->minor===99999);expect(Money::parse('5000','JPY',0)->minor===5000);expect(Money::parse('1234.50','PHP')->minor===123450);expect(Money::parse('100.25','TTD')->minor===10025);});
 echo "Tests passed. Database migration and seed verification require configured MySQL.\n";
+
+
+test('page translation leaves English unchanged when disabled', function (): void {
+    $service=new \App\Services\GooglePageTranslationService(
+        ['enabled'=>false,'api_key'=>''],
+        new \App\Support\Cache(sys_get_temp_dir().'/advancedbroker-translation-test'),
+        new \App\Support\Logger(sys_get_temp_dir().'/advancedbroker-translation-test-logs')
+    );
+    $html='<html lang="en"><body><h1>Hello investor</h1></body></html>';
+    expect($service->translateHtml($html,'de')===$html);
+});
+
+test('page translation leaves English target unchanged', function (): void {
+    $service=new \App\Services\GooglePageTranslationService(
+        ['enabled'=>true,'api_key'=>'test'],
+        new \App\Support\Cache(sys_get_temp_dir().'/advancedbroker-translation-test'),
+        new \App\Support\Logger(sys_get_temp_dir().'/advancedbroker-translation-test-logs')
+    );
+    $html='<html lang="en"><body><h1>Hello investor</h1></body></html>';
+    expect($service->translateHtml($html,'en')===$html);
+});

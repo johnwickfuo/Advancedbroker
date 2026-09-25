@@ -27,3 +27,21 @@ Run migrations in a staging clone first, perform the full financial and authoriz
 - After successful signup/login, a signed HttpOnly market cookie is created for that browser. The account country remains authoritative and later IP/VPN changes do not move that browser to a different market. Logout intentionally leaves this market cookie in place.
 - `GEOIP_DRIVER=auto` resolves in this order: trusted Cloudflare `CF-IPCountry`, local MaxMind (when configured), then the HTTPS ipwho.is fallback. Successful remote lookups are cached by IP, so a new IP is resolved immediately while repeat requests from the same IP do not consume one API request each.
 - The free ipwho.is endpoint permits commercial use but has a 1,000-request/day limit. For sustained production traffic, prefer Cloudflare IP Geolocation or a local/licensed MaxMind database and disable the remote fallback if appropriate.
+
+
+## Server-side Google translation
+
+Public and authentication pages can be translated with Google Cloud Translation without loading the Google website widget in the browser.
+
+1. Enable Cloud Translation API in a Google Cloud project.
+2. Create/restrict an API key for the Cloud Translation API.
+3. Set:
+   - `GOOGLE_TRANSLATE_ENABLED=true`
+   - `GOOGLE_TRANSLATE_API_KEY=...`
+4. Clear `storage/cache`.
+
+Translations are cached by language and source text. The API key stays server-side and is sent in the `X-goog-api-key` request header.
+
+## HTTPS and sessions
+
+Production `APP_URL` should use HTTPS and `SESSION_SECURE_COOKIE=true`. The application redirects plain HTTP traffic to the configured HTTPS origin before starting a session. This prevents login/register CSRF failures caused by Secure cookies being unavailable over HTTP.

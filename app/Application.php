@@ -5,17 +5,17 @@ use App\Exceptions\HttpException;
 use App\Repositories\{ArrayCountryRepository,DatabaseCountryRepository,CompanyRepository};
 use App\Security\{Crypto,Csrf,Session};
 use App\Repositories\UserRepository;
-use App\Services\{AccountAccessService,AuditLogService,AuthService,BrandingService,BrowserMarketLockService,CompanyService,ContactService,ContentService,CountryAccessService,CountryAdminService,CountryResolver,CountryService,DepositService,DynamicFormService,EmailVerificationService,FaqService,CountryMediaService,GeoLocationService,HomepageExperienceService,InvestmentService,KycService,LanguageService,LegalService,LicenseService,NotificationService,OfferingCalculator,OfferingValidator,PasswordResetService,QrCodeService,SecurityEventService,SessionService,SettingsService,ThemeService,Translator,TwoFactorService,UploadService,UserPreferenceService,WalletService,WithdrawalService};
+use App\Services\{AccountAccessService,AuditLogService,AuthService,BrandingService,BrowserMarketLockService,CompanyService,ContactService,ContentService,CountryAccessService,CountryAdminService,CountryResolver,CountryService,DepositService,DynamicFormService,EmailVerificationService,FaqService,CountryMediaService,GeoLocationService,GooglePageTranslationService,HomepageExperienceService,InvestmentService,KycService,LanguageService,LegalService,LicenseService,NotificationService,OfferingCalculator,OfferingValidator,PasswordResetService,QrCodeService,SecurityEventService,SessionService,SettingsService,ThemeService,Translator,TwoFactorService,UploadService,UserPreferenceService,WalletService,WithdrawalService};
 use App\Mail\MailService;
 use App\Support\{Cache,Container,Database,Env,Logger,Request,Response,Router,View};
 
 final class Application {
     public static function boot(string $basePath): Router {
         Env::load($basePath . '/.env');
-        $config = ['app'=>require $basePath.'/config/app.php','database'=>require $basePath.'/config/database.php','mail'=>require $basePath.'/config/mail.php','security'=>require $basePath.'/config/security.php','geoip'=>require $basePath.'/config/geoip.php','localization'=>require $basePath.'/config/localization.php'];
+        $config = ['app'=>require $basePath.'/config/app.php','database'=>require $basePath.'/config/database.php','mail'=>require $basePath.'/config/mail.php','security'=>require $basePath.'/config/security.php','geoip'=>require $basePath.'/config/geoip.php','localization'=>require $basePath.'/config/localization.php','translation'=>require $basePath.'/config/translation.php'];
         date_default_timezone_set($config['app']['timezone']);
         $container = Container::instance();
-        $container->set('config',$config); $container->set('logger',new Logger($basePath.'/storage/logs')); $container->set('cache',new Cache($basePath.'/storage/cache')); $container->set('csrf',new Csrf()); $container->set('view',new View($basePath.'/resources/views')); $container->set('upload',new UploadService($basePath.'/storage/uploads/public',$basePath.'/storage/private',$config['app']['uploads']['max_bytes']));
+        $container->set('config',$config); $container->set('logger',new Logger($basePath.'/storage/logs')); $container->set('cache',new Cache($basePath.'/storage/cache')); $container->set('page_translation',new GooglePageTranslationService($config['translation'],$container->get('cache'),$container->get('logger'))); $container->set('csrf',new Csrf()); $container->set('view',new View($basePath.'/resources/views')); $container->set('upload',new UploadService($basePath.'/storage/uploads/public',$basePath.'/storage/private',$config['app']['uploads']['max_bytes']));
         $database = null;
         try { $database = self::database($basePath); $repository = new DatabaseCountryRepository($database); }
         catch (\Throwable $e) { $container->get('logger')->error('Country repository database unavailable; serving Global fallback.', ['message'=>$e->getMessage()]); $repository = new ArrayCountryRepository([['id'=>0,'code'=>null,'slug'=>'global','name'=>'Global','local_name'=>'Global','currency_code'=>'USD','currency_symbol'=>'$','currency_symbol_position'=>'before','locale'=>'en','timezone'=>'UTC','is_global'=>1,'is_active'=>1,'is_enabled'=>1,'theme'=>[],'visual_assets'=>[]]]); }
@@ -39,10 +39,31 @@ final class Application {
     }
     public static function database(string $basePath): Database { return new Database(require $basePath.'/config/database.php'); }
     public static function handle(string $basePath): void {
-        $router=self::boot($basePath); Session::start(config('app.session')); require $basePath.'/routes/web.php'; require $basePath.'/routes/admin.php'; require $basePath.'/routes/api.php';
+        $router=self::boot($basePath);
+        if (self::shouldRedirectToHttps()) {
+            $path=(string)($_SERVER['REQUEST_URI']??'/');
+            header('Location: '.rtrim((string)config('app.url'),'/').'/'.ltrim($path,'/'),true,302);
+            return;
+        }
+        Session::start(config('app.session')); require $basePath.'/routes/web.php'; require $basePath.'/routes/admin.php'; require $basePath.'/routes/api.php';
         try { $request=Request::capture(); $response=app(\App\Middleware\SecurityHeadersMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CountryResolutionMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\RateLimitMiddleware::class)->handle($request,fn($request)=>app(\App\Middleware\CsrfMiddleware::class)->handle($request,fn($request)=>$router->dispatch($request))))); }
         catch (HttpException $e) { $response=new Response(app('view')->render('errors.'.($e->status===419?'419':$e->status),['title'=>$e->status.' error','message'=>$e->getMessage()]),$e->status); }
         catch (\Throwable $e) { app('logger')->error('Unhandled exception',['type'=>$e::class,'message'=>$e->getMessage()]); $response=config('app.debug') ? new Response('<pre>'.e((string)$e).'</pre>',500) : new Response(app('view')->render('errors.500',['title'=>'Something went wrong']),500); }
         $response->send();
+    }
+
+    private static function shouldRedirectToHttps(): bool {
+        if ((string)config('app.env') !== 'production') return false;
+        if (!str_starts_with((string)config('app.url'),'https://')) return false;
+
+        $https = strtolower((string)($_SERVER['HTTPS'] ?? ''));
+        if ($https !== '' && $https !== 'off' && $https !== '0') return false;
+        if ((int)($_SERVER['SERVER_PORT'] ?? 0) === 443) return false;
+
+        $remote=(string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $forwarded=strtolower(trim(explode(',',(string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0] ?? ''));
+        if (in_array($remote,['127.0.0.1','::1'],true) && $forwarded==='https') return false;
+
+        return true;
     }
 }
