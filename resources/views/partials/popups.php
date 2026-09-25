@@ -14,9 +14,6 @@ $toastPopups=array_values(array_filter($popupNotifications,static fn(array $popu
         <p class="section-label">Important notice</p>
         <h2><?= e($popup['title']) ?></h2>
         <?php if($popup['body']): ?><p><?= nl2br(e($popup['body'])) ?></p><?php endif; ?>
-        <?php if((int)$popup['display_limit']>1): ?>
-          <small class="blocking-popup-count">Display <?= e($popup['display_count']) ?> of <?= e($popup['display_limit']) ?></small>
-        <?php endif; ?>
       </article>
     <?php endforeach; ?>
   </div>
