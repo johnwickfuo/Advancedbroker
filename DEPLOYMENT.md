@@ -19,3 +19,11 @@ Back up the MySQL database, `storage/private` (KYC and receipts), public uploads
 ## Production acceptance
 
 Run migrations in a staging clone first, perform the full financial and authorization test suite with MySQL, set `APP_DEBUG=false`, and verify that no stack trace or private file is web-accessible. This source checkout has not performed those runtime checks because the supplied workspace has no PHP executable, MySQL service, or browser renderer.
+
+
+## Guest location and browser market locking
+
+- An unsigned browser does not persist a country. Its market is resolved again from the current request IP on every request, so a VPN/IP change can change the public market immediately.
+- After successful signup/login, a signed HttpOnly market cookie is created for that browser. The account country remains authoritative and later IP/VPN changes do not move that browser to a different market. Logout intentionally leaves this market cookie in place.
+- `GEOIP_DRIVER=auto` resolves in this order: trusted Cloudflare `CF-IPCountry`, local MaxMind (when configured), then the HTTPS ipwho.is fallback. Successful remote lookups are cached by IP, so a new IP is resolved immediately while repeat requests from the same IP do not consume one API request each.
+- The free ipwho.is endpoint permits commercial use but has a 1,000-request/day limit. For sustained production traffic, prefer Cloudflare IP Geolocation or a local/licensed MaxMind database and disable the remote fallback if appropriate.
