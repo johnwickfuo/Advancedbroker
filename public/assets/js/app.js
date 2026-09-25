@@ -27,3 +27,15 @@ if(modalLayer){
     });
   });
 }
+
+document.querySelectorAll('[data-deposit-method-type]').forEach((select)=>{
+  const syncDepositMethodSections=()=>{
+    const form=select.closest('form');
+    if(!form)return;
+    form.querySelectorAll('[data-method-section]').forEach((section)=>{
+      section.hidden=section.dataset.methodSection!==select.value;
+    });
+  };
+  select.addEventListener('change',syncDepositMethodSections);
+  syncDepositMethodSections();
+});
