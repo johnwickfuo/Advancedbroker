@@ -72,6 +72,20 @@ final class NotificationService {
         });
     }
 
+    public function activeAdminPopups(int $userId): array {
+        return $this->db?->select(
+            'SELECT * FROM notifications WHERE user_id=? AND notification_type="admin_popup" AND display_count<display_limit ORDER BY created_at DESC',
+            [$userId]
+        )??[];
+    }
+    public function endAdminPopup(int $userId,int $notificationId): bool {
+        if(!$this->db)return false;
+        $count=$this->db->execute(
+            'UPDATE notifications SET display_count=display_limit,read_at=COALESCE(read_at,NOW()) WHERE id=? AND user_id=? AND notification_type="admin_popup" AND display_count<display_limit',
+            [$notificationId,$userId]
+        );
+        return $count>0;
+    }
     public function recent(int $userId,int $limit=8): array { return $this->db?->select('SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT '.(int)$limit,[$userId])??[]; }
     public function unreadCount(int $userId): int { return (int)($this->db?->scalar('SELECT COUNT(*) FROM notifications WHERE user_id=? AND channel="popup" AND read_at IS NULL',[$userId])??0); }
     public function markRead(int $userId,int $id): void { $this->db?->execute('UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE id=? AND user_id=?',[$id,$userId]); }
