@@ -6,6 +6,7 @@
 <title><?= e(($title ?? '') . ' · ' . ($dashboardBrand['brand_name']??'ApexTrades')) ?></title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <style nonce="<?= e(app('theme')->nonce()) ?>"><?= app('theme')->css(country()->theme()) ?></style>
+<?php require __DIR__.'/../partials/smartsupp.php'; ?>
 </head>
 <body class="app-shell brokerage-shell">
 <?php require __DIR__.'/../partials/user-sidebar.php'; ?>
@@ -19,5 +20,4 @@
   <main><?php require __DIR__.'/../partials/flash.php'; ?><?= $content ?></main>
 </section>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
-<?php require __DIR__.'/../partials/smartsupp.php'; ?>
 </body></html>
