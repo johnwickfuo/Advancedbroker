@@ -103,6 +103,9 @@ jobs:
       - name: Run production-safe seeders
         run: php bin/seed.php
 
+      - name: Verify catalogue seed counts
+        run: php bin/verify-seed.php
+
       - name: Application boot smoke test
         run: php -r 'require "vendor/autoload.php"; require "app/Support/helpers.php"; \App\Application::boot(getcwd()); echo "Application boot passed\n";'
 

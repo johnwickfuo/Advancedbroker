@@ -1,16 +1,25 @@
 # Company Seed Verification Report
 
-This repository contains the catalogue schema, country-scoped offering model and an intentionally conservative initial factual seed set. Each entry has an official company or exchange/regulatory source URL, a recorded verification date at seed time, and is seeded idempotently by `seed_key`.
+The catalogue seeder creates a reusable factual master pool of 20 public companies and uses that pool to populate market-specific platform investment offerings. Company facts remain separate from administrator-configured offering terms.
 
-| Country Pack | Company | Ticker | Exchange | Primary source |
-| --- | --- | --- | --- | --- |
-| Singapore | AEM Holdings Ltd. | AWX | Singapore Exchange Mainboard | SGX corporate-information record |
-| Philippines | D&L Industries, Inc. | DNL | Philippine Stock Exchange | PSE issuer disclosure |
-| Trinidad and Tobago | Guardian Holdings Limited | GHL | Trinidad and Tobago Stock Exchange | TTSEC record; company site |
-| Global | AEM Holdings International | AWX | Singapore Exchange Mainboard | SGX corporate-information record |
+## Catalogue targets
 
-## Deliberate research limitation
+| Market type | Active offerings after seed | Featured offerings |
+| --- | ---: | ---: |
+| Each enabled national market | at least 10 | at least 5 |
+| Standard / Global catalogue | at least 20 | at least 5 |
 
-The requested approximately 340-company catalogue is **not** represented by invented entries. Completing it requires a country-by-country current verification pass against official issuers and exchanges, especially for the smaller Caribbean markets. The seed architecture is ready for per-country data files and remains intentionally incomplete until those records can be verified and their logo/usage rights recorded.
+The seeder is idempotent: it creates missing records but does not overwrite an existing administrator-edited offering. On an existing installation that already contains the original starter records, those records count toward the market target and the seeder fills the remaining slots.
 
-Platform offering prices in the seed are sample administrator-configured terms; they are not market prices and are labelled accordingly in the UI.
+## Factual master company pool
+
+Apple, Microsoft, NVIDIA, Alphabet, Amazon, JPMorgan Chase, Visa, Coca-Cola, SAP, Siemens, ASML, LVMH, TotalEnergies, Toyota Motor, Sony Group, Samsung Electronics, DBS Group, HSBC, BHP and Reliance Industries.
+
+Each master company includes an official investor/company source in company_sources. Market offerings rotate through the pool so national catalogues are not identical. Global uses up to the full 20-company pool. Platform offering prices and projected returns are administrator-configured terms; they are not live exchange prices, historical market returns or guarantees.
+
+Verification commands:
+
+    php bin/seed.php
+    php bin/verify-seed.php
+
+The verification command exits non-zero if an enabled national market has fewer than 10 active offerings or 5 featured offerings, or if Global has fewer than 20 active offerings or 5 featured offerings.
