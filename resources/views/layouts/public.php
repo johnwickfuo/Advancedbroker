@@ -54,4 +54,5 @@ $currentUser=!empty($_SESSION['user_id'])?app('users')->find((int)$_SESSION['use
   <div class="footer-bottom"><span>© <?= date('Y') ?> <?= e($branding['brand_name']??config('app.name')) ?></span><span>Investing involves risk. Projected returns are not guaranteed.</span></div>
 </footer>
 <script src="<?= e(asset('js/app.js')) ?>" defer></script>
+<?php require __DIR__.'/../partials/smartsupp.php'; ?>
 </body></html>
