@@ -12,7 +12,7 @@
 
     <?php if($kind==='deposit'): ?>
     <label>Method type
-      <select name="method_type">
+      <select name="method_type" data-deposit-method-type>
         <?php foreach(['BANK'=>'Bank transfer','CRYPTO'=>'Cryptocurrency','CUSTOM'=>'Other / custom'] as $value=>$label): ?>
           <option value="<?= e($value) ?>"<?= ($method['method_type']??'CUSTOM')===$value?' selected':'' ?>><?= e($label) ?></option>
         <?php endforeach; ?>
@@ -24,8 +24,9 @@
     <label style="grid-column:1/-1">Description<textarea name="description" rows="3"><?= e($method['description']??'') ?></textarea></label>
     <label style="grid-column:1/-1">User instructions<textarea name="instructions" rows="5"><?= e($method['instructions']??'') ?></textarea></label>
 
-    <?php if($kind==='deposit' && ($method['method_type']??'CUSTOM')==='BANK'): ?>
-    <div style="grid-column:1/-1"><p class="section-label">International bank details</p><p class="muted">These details are shown to users exactly as the destination for their transfer.</p></div>
+    <?php if($kind==='deposit'): ?>
+    <div data-method-section="BANK"<?= ($method['method_type']??'CUSTOM')==='BANK'?'':' hidden' ?> style="grid-column:1/-1">
+    <div><p class="section-label">International bank details</p><p class="muted">These details are shown to users exactly as the destination for their transfer.</p></div>
     <label>Beneficiary name<input name="beneficiary_name" value="<?= e($details['beneficiary_name']??'') ?>"></label>
     <label>Bank name<input name="bank_name" value="<?= e($details['bank_name']??'') ?>"></label>
     <label>Account number / IBAN<input name="account_iban" value="<?= e($details['account_iban']??'') ?>"></label>
@@ -33,8 +34,10 @@
     <label>Routing / ABA <span class="muted">(optional)</span><input name="routing_aba" value="<?= e($details['routing_aba']??'') ?>"></label>
     <label>Bank address<input name="bank_address" value="<?= e($details['bank_address']??'') ?>"></label>
     <label style="grid-column:1/-1">Beneficiary address <span class="muted">(optional)</span><input name="beneficiary_address" value="<?= e($details['beneficiary_address']??'') ?>"></label>
-    <?php elseif($kind==='deposit' && ($method['method_type']??'CUSTOM')==='CRYPTO'): ?>
-    <div style="grid-column:1/-1"><p class="section-label">Crypto destination</p><p class="muted">Save the wallet address and ApexTrades automatically generates its QR code.</p></div>
+    </div>
+
+    <div data-method-section="CRYPTO"<?= ($method['method_type']??'CUSTOM')==='CRYPTO'?'':' hidden' ?> style="grid-column:1/-1">
+    <div><p class="section-label">Crypto destination</p><p class="muted">Save the wallet address and ApexTrades automatically generates its QR code.</p></div>
     <label>Asset<input name="asset" value="<?= e($details['asset']??'') ?>" placeholder="BTC or USDT"></label>
     <label>Network<input name="network" value="<?= e($details['network']??'') ?>" placeholder="Bitcoin Mainnet, TRC20, ERC20..."></label>
     <label style="grid-column:1/-1">Wallet address<input name="wallet_address" value="<?= e($details['wallet_address']??'') ?>" autocomplete="off"></label>
@@ -49,6 +52,7 @@
         <?php endif; ?>
       </div>
     <?php endif; ?>
+    </div>
     <?php endif; ?>
 
     <?php if($kind==='deposit'): ?>
