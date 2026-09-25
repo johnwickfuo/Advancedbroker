@@ -131,7 +131,7 @@ final class AiTradingService
             return $purchase;
         });
 
-        $this->notifications->create((int)$user['id'],'ai_code_purchased','AI trading code purchased','Your unique code is ready to activate.',['url'=>'/dashboard/ai-trading/'.$result['public_id'].'/activate']);
+        $this->notifications->transactional((int)$user['id'],'ai_code_purchased','AI trading code purchased','Your unique code is ready to activate.',['url'=>'/dashboard/ai-trading/'.$result['public_id'].'/activate']);
         return $result;
     }
 
@@ -158,7 +158,7 @@ final class AiTradingService
             return $db->one('SELECT * FROM ai_trading_purchases WHERE id=?',[$purchase['id']]);
         });
 
-        $this->notifications->create($userId,'ai_trade_activated','AI trading activated','Your AI trading cycle is now active.',['url'=>'/dashboard/ai-trading']);
+        $this->notifications->transactional($userId,'ai_trade_activated','AI trading activated','Your AI trading cycle is now active.',['url'=>'/dashboard/ai-trading']);
         return $this->withProgress($result);
     }
 
@@ -206,7 +206,7 @@ final class AiTradingService
             });
             if($purchase){
                 $done[]=$purchase['id'];
-                $this->notifications->create((int)$purchase['user_id'],'ai_trade_completed','AI trading completed','Your purchase amount and fixed profit have been credited to your wallet.',['url'=>'/dashboard/ai-trading']);
+                $this->notifications->transactional((int)$purchase['user_id'],'ai_trade_completed','AI trading completed','Your purchase amount and fixed profit have been credited to your wallet.',['url'=>'/dashboard/ai-trading']);
             }
         }
         return $done;
