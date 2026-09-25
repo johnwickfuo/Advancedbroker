@@ -5,6 +5,7 @@ $uri=(string)($_SERVER['REQUEST_URI']??'/');
 $active=static fn(string $path): string => str_starts_with($uri,$path)?' active':'';
 ?>
 <aside class="dashboard-sidebar persistent-user-sidebar">
+  <button type="button" class="sidebar-close" data-menu-close aria-label="Close navigation">×</button>
   <div class="sidebar-brand"><?php require __DIR__.'/brand.php'; ?></div>
   <div class="sidebar-account-card">
     <span><?= e($sidebarUser['first_name']??'Investor') ?> <?= e($sidebarUser['last_name']??'') ?></span>
