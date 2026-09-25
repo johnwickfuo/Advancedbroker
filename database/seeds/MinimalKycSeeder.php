@@ -51,11 +51,16 @@ final class MinimalKycSeeder
         $countries=$db->select('SELECT id FROM countries WHERE is_global=1 OR (is_active=1 AND is_enabled=1) ORDER BY id');
         foreach($countries as $country){
             $countryId=(int)$country['id'];
-            $active=(int)$db->scalar(
-                'SELECT COUNT(*) FROM kyc_configurations WHERE country_id=? AND is_active=1',
+            $activeConfig=$db->one(
+                'SELECT id,form_id FROM kyc_configurations WHERE country_id=? AND is_active=1 ORDER BY version DESC LIMIT 1',
                 [$countryId]
             );
-            if($active>0) continue;
+            if($activeConfig){
+                if(empty($activeConfig['form_id'])){
+                    $db->execute('UPDATE kyc_configurations SET form_id=?,updated_at=NOW() WHERE id=?',[$formId,(int)$activeConfig['id']]);
+                }
+                continue;
+            }
 
             $version=(int)($db->scalar('SELECT COALESCE(MAX(version),0)+1 FROM kyc_configurations WHERE country_id=?',[$countryId])??1);
             $db->execute(
