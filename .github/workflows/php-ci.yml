@@ -111,6 +111,9 @@ jobs:
       - name: Verify catalogue seed counts
         run: php bin/verify-seed.php
 
+      - name: Verify AI trading seed
+        run: php bin/verify-ai-seed.php
+
       - name: Verify QA user seed
         run: php bin/verify-qa-user.php
 
