@@ -9,67 +9,52 @@ $gtCountryId=$gtContext->id();
 ?>
 <div class="gtranslate_wrapper notranslate" translate="no" aria-label="Language selector"></div>
 <script>
+(function(){
+  var target=<?= json_encode($gtTarget,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) ?>;
+  var countryId=<?= json_encode((string)$gtCountryId) ?>;
+
+  function getCookie(name){
+    var prefix=name+"=";
+    var parts=document.cookie.split(";");
+    for(var i=0;i<parts.length;i++){
+      var part=parts[i].trim();
+      if(part.indexOf(prefix)===0){
+        try{return decodeURIComponent(part.substring(prefix.length));}
+        catch(e){return part.substring(prefix.length);}
+      }
+    }
+    return "";
+  }
+
+  function setTranslateCookie(language){
+    var value="/en/"+language;
+    document.cookie="googtrans="+encodeURIComponent(value)+"; path=/; SameSite=Lax";
+  }
+
+  var previousCountry=null;
+  try{previousCountry=localStorage.getItem("apex_gtranslate_country");}catch(e){}
+
+  var currentTranslation=getCookie("googtrans");
+  var currentLanguage=currentTranslation ? currentTranslation.split("/").pop() : "";
+
+  /*
+   * Country Pack changes should reset GTranslate to that market's default
+   * language. Inside the same Country Pack, a visitor's manual language
+   * selection is preserved.
+   *
+   * Also recover browsers affected by the previous implementation where the
+   * dropdown changed visually but no googtrans cookie was actually created.
+   */
+  if(previousCountry!==countryId || !currentLanguage){
+    setTranslateCookie(target);
+    try{localStorage.setItem("apex_gtranslate_country",countryId);}catch(e){}
+  }
+})();
+
 window.gtranslateSettings={
   default_language:"en",
   languages:["en","de","fr","it","es","nl","sv","no","da","ja","ko","zh-TW","hi","ar","pl","tl","pt"],
   wrapper_selector:".gtranslate_wrapper"
 };
-window.apexGTranslateTarget=<?= json_encode($gtTarget,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) ?>;
-window.apexGTranslateCountry=<?= json_encode((string)$gtCountryId) ?>;
 </script>
 <script src="https://cdn.gtranslate.net/widgets/latest/dropdown.js" defer></script>
-<script>
-(function(){
-  function marker(){
-    try{return localStorage.getItem("apex_gtranslate_country");}catch(e){return null;}
-  }
-  function saveMarker(){
-    try{localStorage.setItem("apex_gtranslate_country",window.apexGTranslateCountry);}catch(e){}
-  }
-  function switchLanguage(){
-    if(marker()===window.apexGTranslateCountry)return;
-
-    var target=window.apexGTranslateTarget||"en";
-    var wrapper=document.querySelector(".gtranslate_wrapper");
-    var select=wrapper?wrapper.querySelector("select"):null;
-
-    if(select){
-      var wanted=null;
-      for(var i=0;i<select.options.length;i++){
-        var value=String(select.options[i].value||"");
-        if(value===target||value==="en|"+target||value.endsWith("|"+target)){
-          wanted=value;
-          break;
-        }
-      }
-      if(wanted!==null){
-        select.value=wanted;
-        select.dispatchEvent(new Event("change",{bubbles:true}));
-        saveMarker();
-        return true;
-      }
-    }
-
-    if(typeof window.doGTranslate==="function"){
-      window.doGTranslate("en|"+target);
-      saveMarker();
-      return true;
-    }
-
-    return false;
-  }
-
-  var attempts=0;
-  function trySwitch(){
-    if(switchLanguage())return;
-    attempts++;
-    if(attempts<40)setTimeout(trySwitch,250);
-  }
-
-  if(document.readyState==="loading"){
-    document.addEventListener("DOMContentLoaded",trySwitch,{once:true});
-  }else{
-    trySwitch();
-  }
-})();
-</script>
