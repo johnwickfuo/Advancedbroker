@@ -7,8 +7,10 @@ try {
     (new \Database\Seeds\AuthSettingsSeeder())->run($db);
     (new \Database\Seeds\CompanySeeder())->run($db);
     (new \Database\Seeds\AiTradingSeeder())->run($db);
+    (new \Database\Seeds\PlatformContentSeeder())->run($db);
+    (new \Database\Seeds\WithdrawalFormSeeder())->run($db);
     (new \Database\Seeds\QaUserSeeder())->run($db);
-    echo "Seeded countries, languages, authentication settings, company records, AI trading categories and optional QA user.\n";
+    echo "Seeded countries, languages, authentication settings, company records, AI trading categories, legal pages, FAQs, global withdrawal configuration and optional QA user.\n";
 } catch (Throwable $e) {
     fwrite(STDERR,"Seed command failed: ".$e->getMessage()."\n");
     exit(1);
