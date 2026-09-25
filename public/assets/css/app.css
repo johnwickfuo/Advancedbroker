@@ -141,3 +141,14 @@
 
 .sidebar-close{display:none;align-self:flex-end;border:1px solid #ffffff24;background:#ffffff12;color:#fff;width:36px;height:36px;border-radius:10px;font-size:24px;line-height:1;cursor:pointer;margin:0 0 4px auto}
 @media(max-width:760px){.app-shell aside.open .sidebar-close{display:grid;place-items:center}.app-shell aside.open{overflow-y:auto;box-shadow:18px 0 42px #0004}}
+
+.popup-modal-open{overflow:hidden}
+.blocking-popup-layer{position:fixed;inset:0;z-index:100000;background:rgba(4,10,22,.72);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
+.blocking-popup-stack{width:min(560px,100%);display:grid;gap:16px}
+.blocking-popup-card{position:relative;background:var(--color-surface);border:1px solid var(--color-border);border-radius:22px;box-shadow:0 30px 90px #0006;padding:34px 30px 28px;max-height:82vh;overflow:auto}
+.blocking-popup-card h2{font-size:clamp(26px,5vw,38px);margin:0 44px 14px 0;letter-spacing:-.04em}
+.blocking-popup-card p{white-space:normal;color:var(--color-text);margin-bottom:14px}
+.blocking-popup-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border:1px solid var(--color-border);border-radius:50%;background:var(--color-background);color:var(--color-text);font-size:25px;line-height:1;cursor:pointer}
+.blocking-popup-close:hover{background:var(--color-border)}
+.blocking-popup-count{display:block;color:var(--color-muted);margin-top:18px}
+@media(max-width:600px){.blocking-popup-layer{padding:14px}.blocking-popup-card{padding:28px 22px 22px;border-radius:18px}}
