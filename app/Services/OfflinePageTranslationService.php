@@ -69,15 +69,20 @@ final class OfflinePageTranslationService
 
     private function invoke(array $texts,string $target): ?array
     {
+        $failureKey='offline-translate-failure:'.$target;
+        if($this->cache->get($failureKey)===true) return null;
+
         $python=(string)($this->config['python']??'python3');
         $script=(string)($this->config['script']??'');
         if($script===''||!is_file($script)||!function_exists('proc_open')) return null;
+
         $cmd=escapeshellcmd($python).' '.escapeshellarg($script).' '.escapeshellarg($target);
         $pipes=[];
         foreach(['packages_dir','xdg_data_home','xdg_config_home','xdg_cache_home'] as $key){
             $path=trim((string)($this->config[$key]??''));
             if($path!==''&&!is_dir($path))@mkdir($path,0750,true);
         }
+
         $env=getenv();
         if(!is_array($env))$env=[];
         $env['PYTHONUNBUFFERED']='1';
@@ -85,16 +90,72 @@ final class OfflinePageTranslationService
         $env['XDG_DATA_HOME']=(string)($this->config['xdg_data_home']??'');
         $env['XDG_CONFIG_HOME']=(string)($this->config['xdg_config_home']??'');
         $env['XDG_CACHE_HOME']=(string)($this->config['xdg_cache_home']??'');
+
         $proc=@proc_open($cmd,[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes,null,$env);
         if(!is_resource($proc)) return null;
-        fwrite($pipes[0],json_encode($texts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)?:'[]'); fclose($pipes[0]);
-        $stdout=stream_get_contents($pipes[1]); fclose($pipes[1]);
-        $stderr=stream_get_contents($pipes[2]); fclose($pipes[2]);
-        $code=proc_close($proc);
+
+        fwrite($pipes[0],json_encode($texts,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)?:'[]');
+        fclose($pipes[0]);
+
+        stream_set_blocking($pipes[1],false);
+        stream_set_blocking($pipes[2],false);
+
+        $stdout='';
+        $stderr='';
+        $timeout=max(1,min(15,(int)($this->config['timeout_seconds']??4)));
+        $deadline=microtime(true)+$timeout;
+        $status=null;
+
+        while(true){
+            $out=stream_get_contents($pipes[1]);
+            $err=stream_get_contents($pipes[2]);
+            if(is_string($out))$stdout.=$out;
+            if(is_string($err))$stderr.=$err;
+
+            $status=proc_get_status($proc);
+            if(!($status['running']??false)) break;
+
+            if(microtime(true)>=$deadline){
+                @proc_terminate($proc);
+                usleep(100000);
+                $after=proc_get_status($proc);
+                if($after['running']??false) @proc_terminate($proc,9);
+
+                $out=stream_get_contents($pipes[1]);
+                $err=stream_get_contents($pipes[2]);
+                if(is_string($out))$stdout.=$out;
+                if(is_string($err))$stderr.=$err;
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                @proc_close($proc);
+
+                $cooldown=max(30,min(3600,(int)($this->config['failure_cooldown_seconds']??300)));
+                $this->cache->put($failureKey,true,$cooldown);
+                $this->logger->error('Offline translation timed out; serving source language.',['target'=>$target,'timeout_seconds'=>$timeout]);
+                return null;
+            }
+
+            usleep(20000);
+        }
+
+        $out=stream_get_contents($pipes[1]);
+        $err=stream_get_contents($pipes[2]);
+        if(is_string($out))$stdout.=$out;
+        if(is_string($err))$stderr.=$err;
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $statusCode=is_array($status)?(int)($status['exitcode']??-1):-1;
+        $closeCode=proc_close($proc);
+        $code=$statusCode>=0?$statusCode:$closeCode;
+
         if($code!==0){
-            $this->logger->error('Offline translation failed.',['target'=>$target,'error'=>trim((string)$stderr)]);
+            $cooldown=max(30,min(3600,(int)($this->config['failure_cooldown_seconds']??300)));
+            $this->cache->put($failureKey,true,$cooldown);
+            $this->logger->error('Offline translation failed; serving source language.',['target'=>$target,'error'=>trim((string)$stderr)]);
             return null;
         }
+
         $decoded=json_decode((string)$stdout,true);
         return is_array($decoded)?$decoded:null;
     }
