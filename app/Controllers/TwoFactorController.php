@@ -8,7 +8,7 @@ final class TwoFactorController extends Controller {
     public function challenge(Request $request):Response{if(empty($_SESSION['two_factor_challenge']))return Response::redirect(route('login'));return $this->view('auth.two-factor-challenge',['title'=>'Security check'],'layouts.auth');}
     public function verifyChallenge(Request $request):Response{
         if(!app('auth')->completeTwoFactor((string)$request->input('code',''),$request)){ $this->flash('error','That authentication code is invalid or expired.');return Response::redirect(route('two-factor.challenge')); }
-        return Response::redirect(route('dashboard.index'));
+        return Response::redirect(($_SESSION['user_role']??'')==='super_admin'?route('admin.index'):route('dashboard.index'));
     }
     public function setup(Request $request):Response{
         $user=$this->user();if(!empty($user['two_factor_enabled_at'])){ $this->flash('success','Two-factor authentication is already enabled.');return Response::redirect(route('dashboard.security')); }
