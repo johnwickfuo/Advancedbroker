@@ -1,9 +1,9 @@
-<?php $currentUser=app('users')->find((int)($_SESSION['user_id']??0)); ?>
+<?php $currentUser=app('users')->find((int)($_SESSION['user_id']??0)); $dashboardBrand=app('branding')->forCountry(country()->country); ?>
 <!doctype html>
 <html lang="<?= e(country()->languageCode) ?>">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?= e(($title ?? '') . ' · ' . config('app.name')) ?></title>
+<title><?= e(($title ?? '') . ' · ' . ($dashboardBrand['brand_name']??'ApexTrades')) ?></title>
 <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 <style nonce="<?= e(app('theme')->nonce()) ?>"><?= app('theme')->css(country()->theme()) ?></style>
 </head>
