@@ -7,6 +7,7 @@ final class AdminUserController extends Controller {
     public function show(Request $request): Response {
         $user=app('users')->find((int)$request->route('user'));
         if(!$user)return new Response(app('view')->render('errors.404',['title'=>'User not found'],'layouts.admin'),404);
+        $userCountry=app('countries')->byId((int)($user['assigned_country_id']??$user['country_id']??0))??country()->country;
         $wallet=app('database')?->one('SELECT * FROM wallets WHERE user_id=? LIMIT 1',[(int)$user['id']]);
         $ledger=app('database')?->select('SELECT * FROM ledger_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 10',[(int)$user['id']])??[];
         return $this->view('admin.user-detail',[
@@ -16,6 +17,7 @@ final class AdminUserController extends Controller {
             'events'=>app('security_events')->recent((int)$user['id']),
             'activePopups'=>app('notifications')->activeAdminPopups((int)$user['id']),
             'wallet'=>$wallet,
+            'userCountry'=>$userCountry,
             'recentLedger'=>$ledger,
         ],'layouts.admin');
     }
