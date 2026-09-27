@@ -1,11 +1,99 @@
 <?php
 declare(strict_types=1);
 namespace App\Controllers;
-use App\Support\{Request,Response};
+use App\Support\{Money,Request,Response};
 final class AdminUserController extends Controller {
     public function index(Request $request): Response { $query=trim((string)$request->input('q',''));return $this->view('admin.users',['title'=>'Users','users'=>app('users')->search($query),'query'=>$query],'layouts.admin'); }
-    public function show(Request $request): Response { $user=app('users')->find((int)$request->route('user'));if(!$user)return new Response(app('view')->render('errors.404',['title'=>'User not found'],'layouts.admin'),404);return $this->view('admin.user-detail',['title'=>'User account','user'=>$user,'countries'=>app('countries')->allEnabled(),'events'=>app('security_events')->recent((int)$user['id']),'activePopups'=>app('notifications')->activeAdminPopups((int)$user['id'])],'layouts.admin'); }
+    public function show(Request $request): Response {
+        $user=app('users')->find((int)$request->route('user'));
+        if(!$user)return new Response(app('view')->render('errors.404',['title'=>'User not found'],'layouts.admin'),404);
+        $wallet=app('database')?->one('SELECT * FROM wallets WHERE user_id=? LIMIT 1',[(int)$user['id']]);
+        $ledger=app('database')?->select('SELECT * FROM ledger_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 10',[(int)$user['id']])??[];
+        return $this->view('admin.user-detail',[
+            'title'=>'User account',
+            'user'=>$user,
+            'countries'=>app('countries')->allEnabled(),
+            'events'=>app('security_events')->recent((int)$user['id']),
+            'activePopups'=>app('notifications')->activeAdminPopups((int)$user['id']),
+            'wallet'=>$wallet,
+            'recentLedger'=>$ledger,
+        ],'layouts.admin');
+    }
     public function country(Request $request): Response { $user=$this->target($request);$country=app('countries')->enabledById((int)$request->input('country_id',0));if(!$user||!$country)return $this->bad('A valid enabled market is required.',$user);if((int)($user['assigned_country_id']??$user['country_id'])!==(int)$country['id']&&app('wallets')->exposure((int)$user['id']))return $this->bad('Country reassignment is blocked while this user has financial history or a pending deposit. Resolve financial exposure first; no FX conversion is performed.',$user);$old=['country_id'=>$user['assigned_country_id']??$user['country_id']];app('users')->update((int)$user['id'],['assigned_country_id'=>(int)$country['id'],'country_id'=>(int)$country['id'],'country_assignment_source'=>'ADMIN']);app('countries')->forget($country);app('sessions')->revokeAll((int)$user['id']);app('audit')->record((int)$_SESSION['user_id'],'user.country_changed','user',(int)$user['id'],$old,['country_id'=>(int)$country['id'],'country'=>$country['slug']],trim((string)$request->input('reason',''))?:null,$request);app('notifications')->create((int)$user['id'],'country_changed','Investment region updated','Your investment region is now '.$country['name'].'.');$this->flash('success','User market updated; their active sessions were invalidated.');return Response::redirect(route('admin.users.show',['user'=>$user['id']])); }
+    public function adjustWallet(Request $request): Response {
+        $user=$this->target($request);
+        if(!$user)return Response::redirect(route('admin.users.index'));
+
+        $direction=strtoupper(trim((string)$request->input('direction','')));
+        $reason=trim((string)$request->input('reason',''));
+        $amountRaw=trim((string)$request->input('amount',''));
+
+        if(!in_array($direction,['CREDIT','DEBIT'],true)){
+            return $this->bad('Choose Credit or Debit.',$user);
+        }
+        if($reason===''||mb_strlen($reason)>500){
+            return $this->bad('A reason is required and must be 500 characters or fewer.',$user);
+        }
+
+        try{
+            $countryId=(int)($user['assigned_country_id']??$user['country_id']??0);
+            $country=app('countries')->byId($countryId);
+            if(!$country)throw new \RuntimeException('The user does not have a valid Country Pack.');
+
+            $wallet=app('wallets')->walletFor($user,$country);
+            if(!$wallet)throw new \RuntimeException('The user wallet could not be loaded.');
+
+            $currency=(string)$wallet['currency_code'];
+            $scale=in_array($currency,['JPY','KRW'],true)?0:2;
+            $amount=Money::parse($amountRaw,$currency,$scale)->minor;
+            if($amount<=0)throw new \InvalidArgumentException('Enter an amount greater than zero.');
+
+            $before=(int)$wallet['available_balance_minor'];
+            if($direction==='DEBIT'&&$amount>$before){
+                throw new \RuntimeException('Debit exceeds the user’s available balance.');
+            }
+
+            $result=app('wallets')->move(
+                (int)$wallet['id'],
+                $direction==='CREDIT'?'ADMIN_CREDIT':'ADMIN_DEBIT',
+                $direction,
+                $amount,
+                $direction==='CREDIT'?'Administrator credit':'Administrator debit',
+                'admin-user-adjustment',
+                bin2hex(random_bytes(16)),
+                (int)$_SESSION['user_id'],
+                $reason
+            );
+
+            app('audit')->record(
+                (int)$_SESSION['user_id'],
+                'wallet.manual_'.strtolower($direction),
+                'wallet',
+                (int)$wallet['id'],
+                ['available_balance_minor'=>$result['before'],'currency_code'=>$currency],
+                ['available_balance_minor'=>$result['after'],'currency_code'=>$currency,'amount_minor'=>$amount,'direction'=>$direction,'ledger_reference'=>$result['reference']],
+                $reason,
+                $request,
+                ['target_user_id'=>(int)$user['id']]
+            );
+
+            $amountLabel=(new Money($amount,$currency))->format($currency.' ',$scale);
+            app('notifications')->create(
+                (int)$user['id'],
+                'wallet_adjustment',
+                'Wallet balance updated',
+                ($direction==='CREDIT'?'A credit of ':'A debit of ').$amountLabel.' was applied to your wallet. Reference: '.$result['reference'].'.',
+                ['reference'=>$result['reference'],'direction'=>$direction,'amount_minor'=>$amount,'currency_code'=>$currency]
+            );
+
+            $this->flash('success',($direction==='CREDIT'?'Credit':'Debit').' recorded successfully. Ledger reference: '.$result['reference'].'.');
+        }catch(\Throwable $e){
+            $this->flash('error',$e->getMessage());
+        }
+
+        return Response::redirect(route('admin.users.show',['user'=>$user['id']]));
+    }
+
     public function popup(Request $request): Response {
         $user=$this->target($request);
         if(!$user)return Response::redirect(route('admin.users.index'));
