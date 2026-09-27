@@ -1,8 +1,8 @@
 <?php
 $walletCurrency=(string)($wallet['currency_code']??$userCountry['currency_code']??'USD');
 $walletScale=in_array($walletCurrency,['JPY','KRW'],true)?0:2;
-$formatWallet=static fn(int $minor,string $currency=$walletCurrency,int $scale=$walletScale): string =>
-    (new \App\Support\Money($minor,$currency))->format($currency.' ',$scale);
+$formatWallet=static fn(int $minor): string =>
+    (new \App\Support\Money($minor,$walletCurrency))->format($walletCurrency.' ',$walletScale);
 $available=(int)($wallet['available_balance_minor']??0);
 $reserved=(int)($wallet['reserved_balance_minor']??0);
 ?>
