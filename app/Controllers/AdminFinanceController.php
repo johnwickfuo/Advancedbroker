@@ -6,4 +6,27 @@ final class AdminFinanceController extends Controller {private function minor(Re
  public function depositFile(Request $r):Response{$file=app('database')?->one('SELECT * FROM deposit_files WHERE id=? AND deposit_request_id=?',[(int)$r->route('file'),(int)$r->route('deposit')]);if(!$file)throw new NotFoundException('Receipt not found.');return app(MediaController::class)->privateFile((string)$file['storage_path'],(string)$file['original_filename'],(string)$file['mime_type'],(bool)$r->input('download'));}
  public function depositAction(Request $r):Response{try{$id=(int)$r->route('deposit');$action=(string)$r->input('action');if($action==='review')app('deposits')->review($id,(int)$_SESSION['user_id']);elseif($action==='approve')app('deposits')->approve($id,(int)$_SESSION['user_id'],(string)$r->input('notes',''));elseif($action==='reject')app('deposits')->reject($id,(int)$_SESSION['user_id'],(string)$r->input('reason'));else throw new \InvalidArgumentException('Unknown action.');$this->flash('success','Deposit updated.');}catch(\Throwable $e){$this->flash('error',$e->getMessage());}return $this->redirect('admin.deposits.show',['deposit'=>(int)$r->route('deposit')]);}
  public function ledger(Request $r):Response{$db=app('database');$rows=$db?->select('SELECT l.*,u.email FROM ledger_transactions l JOIN users u ON u.id=l.user_id ORDER BY l.created_at DESC LIMIT 100')??[];return $this->view('admin/ledger',['title'=>'Ledger transactions','transactions'=>$rows],'layouts.admin');}
- public function adjustment(Request $r):Response{try{$user=app('users')->find((int)$r->input('user_id'));if(!$user)throw new \RuntimeException('User not found.');$country=app('countries')->byId((int)$user['country_id'])??country()->country;$wallet=app('wallets')->walletFor($user,$country);$direction=(string)$r->input('direction');$reason=trim((string)$r->input('reason'));if(!in_array($direction,['CREDIT','DEBIT'],true)||$reason==='')throw new \InvalidArgumentException('Direction and reason are required.');app('wallets')->move((int)$wallet['id'],$direction==='CREDIT'?'ADMIN_CREDIT':'ADMIN_DEBIT',$direction,$this->minor($r),'Manual administrator adjustment','admin-adjustment',(string)bin2hex(random_bytes(8)),(int)$_SESSION['user_id'],$reason);app('audit')->record((int)$_SESSION['user_id'],'wallet.manual_'.$direction,'wallet',(int)$wallet['id'],null,['reason'=>$reason],$reason,$r);$this->flash('success','Wallet adjustment recorded.');}catch(\Throwable $e){$this->flash('error',$e->getMessage());}return $this->redirect('admin.transactions');}}
+ public function adjustment(Request $r):Response{
+    try{
+        $user=app('users')->find((int)$r->input('user_id'));
+        if(!$user||($user['role']??'')==='super_admin')throw new \RuntimeException('User not found.');
+        $countryId=(int)($user['assigned_country_id']??$user['country_id']??0);
+        $country=app('countries')->byId($countryId)??country()->country;
+        $wallet=app('wallets')->walletFor($user,$country);
+        if(!$wallet)throw new \RuntimeException('Wallet unavailable.');
+        $direction=strtoupper((string)$r->input('direction'));
+        $reason=trim((string)$r->input('reason'));
+        if(!in_array($direction,['CREDIT','DEBIT'],true)||$reason==='')throw new \InvalidArgumentException('Direction and reason are required.');
+        $currency=(string)$wallet['currency_code'];
+        $scale=in_array($currency,['JPY','KRW'],true)?0:2;
+        $amount=Money::parse((string)$r->input('amount'),$currency,$scale)->minor;
+        if($amount<=0)throw new \InvalidArgumentException('Enter an amount greater than zero.');
+        if($direction==='DEBIT'&&$amount>(int)$wallet['available_balance_minor'])throw new \RuntimeException('Debit exceeds the user’s available balance.');
+        $result=app('wallets')->move((int)$wallet['id'],$direction==='CREDIT'?'ADMIN_CREDIT':'ADMIN_DEBIT',$direction,$amount,'Manual administrator adjustment','admin-adjustment',bin2hex(random_bytes(16)),(int)$_SESSION['user_id'],$reason);
+        app('audit')->record((int)$_SESSION['user_id'],'wallet.manual_'.strtolower($direction),'wallet',(int)$wallet['id'],['available_balance_minor'=>$result['before'],'currency_code'=>$currency],['available_balance_minor'=>$result['after'],'currency_code'=>$currency,'amount_minor'=>$amount,'ledger_reference'=>$result['reference']],$reason,$r);
+        $this->flash('success','Wallet adjustment recorded. Reference: '.$result['reference'].'.');
+    }catch(\Throwable $e){
+        $this->flash('error',$e->getMessage());
+    }
+    return $this->redirect('admin.transactions');
+ }}
