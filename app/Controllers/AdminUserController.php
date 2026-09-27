@@ -67,26 +67,42 @@ final class AdminUserController extends Controller {
                 $reason
             );
 
-            app('audit')->record(
-                (int)$_SESSION['user_id'],
-                'wallet.manual_'.strtolower($direction),
-                'wallet',
-                (int)$wallet['id'],
-                ['available_balance_minor'=>$result['before'],'currency_code'=>$currency],
-                ['available_balance_minor'=>$result['after'],'currency_code'=>$currency,'amount_minor'=>$amount,'direction'=>$direction,'ledger_reference'=>$result['reference']],
-                $reason,
-                $request,
-                ['target_user_id'=>(int)$user['id']]
-            );
+            try{
+                app('audit')->record(
+                    (int)$_SESSION['user_id'],
+                    'wallet.manual_'.strtolower($direction),
+                    'wallet',
+                    (int)$wallet['id'],
+                    ['available_balance_minor'=>$result['before'],'currency_code'=>$currency],
+                    ['available_balance_minor'=>$result['after'],'currency_code'=>$currency,'amount_minor'=>$amount,'direction'=>$direction,'ledger_reference'=>$result['reference']],
+                    $reason,
+                    $request,
+                    ['target_user_id'=>(int)$user['id']]
+                );
+            }catch(\Throwable $auditError){
+                app('logger')->error('Wallet adjustment audit log failed',[
+                    'user_id'=>(int)$user['id'],
+                    'reference'=>$result['reference'],
+                    'message'=>$auditError->getMessage(),
+                ]);
+            }
 
             $amountLabel=(new Money($amount,$currency))->format($currency.' ',$scale);
-            app('notifications')->create(
-                (int)$user['id'],
-                'wallet_adjustment',
-                'Wallet balance updated',
-                ($direction==='CREDIT'?'A credit of ':'A debit of ').$amountLabel.' was applied to your wallet. Reference: '.$result['reference'].'.',
-                ['reference'=>$result['reference'],'direction'=>$direction,'amount_minor'=>$amount,'currency_code'=>$currency]
-            );
+            try{
+                app('notifications')->create(
+                    (int)$user['id'],
+                    'wallet_adjustment',
+                    'Wallet balance updated',
+                    ($direction==='CREDIT'?'A credit of ':'A debit of ').$amountLabel.' was applied to your wallet. Reference: '.$result['reference'].'.',
+                    ['reference'=>$result['reference'],'direction'=>$direction,'amount_minor'=>$amount,'currency_code'=>$currency]
+                );
+            }catch(\Throwable $notificationError){
+                app('logger')->error('Wallet adjustment notification failed',[
+                    'user_id'=>(int)$user['id'],
+                    'reference'=>$result['reference'],
+                    'message'=>$notificationError->getMessage(),
+                ]);
+            }
 
             $this->flash('success',($direction==='CREDIT'?'Credit':'Debit').' recorded successfully. Ledger reference: '.$result['reference'].'.');
         }catch(\Throwable $e){
