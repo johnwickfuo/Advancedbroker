@@ -1,4 +1,4 @@
-# Upgraded Broker
+# ExpertViewMarket
 
 Plain PHP 8.2+ foundation for a multi-country investment platform. It uses PDO, prepared statements and a single public web root.
 

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 return [
-    'name' => env('APP_NAME', 'ApexTrades'),
+    'name' => env('APP_NAME', 'ExpertViewMarket'),
     'env' => env('APP_ENV', 'production'),
     'debug' => filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOL),
     'url' => rtrim((string) env('APP_URL', ''), '/'),
